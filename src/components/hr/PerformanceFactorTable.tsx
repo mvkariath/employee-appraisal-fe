@@ -46,32 +46,47 @@ const PerformanceFactorsTable: React.FC<PerformanceFactorsTableProps> = ({
   factors,
 }) => {
   if (!factors?.length) return null;
+
   return (
     <div className="overflow-x-auto w-full">
-      <Table>
+      <Table className="border rounded-lg">
         <TableHeader>
-          <TableRow>
-            <TableHead>Competency</TableHead>
-            <TableHead>Strengths</TableHead>
-            <TableHead>Areas for Improvement</TableHead>
-            <TableHead>Rating</TableHead>
+          <TableRow className="bg-gray-100 text-gray-800">
+            <TableHead className="text-base font-semibold">Competency</TableHead>
+            <TableHead className="text-base font-semibold">Strengths</TableHead>
+            <TableHead className="text-base font-semibold">Areas for Improvement</TableHead>
+            <TableHead className="text-base font-semibold">Rating</TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
           {factors.map((pf, idx) => (
-            <TableRow key={pf.competency || idx}>
+            <TableRow
+              key={pf.competency || idx}
+              className="hover:bg-gray-50 transition-colors"
+            >
               <TableCell>
-                <Badge variant="secondary" className="text-base px-3 py-1">
+                <Badge
+                  variant="secondary"
+                  className="text-sm font-medium px-3 py-1 rounded-full bg-blue-100 text-blue-800"
+                >
                   {competencyDisplay[pf.competency] || pf.competency}
                 </Badge>
               </TableCell>
-              <TableCell className="whitespace-pre-line">{pf.strengths}</TableCell>
-              <TableCell className="whitespace-pre-line">{pf.improvements}</TableCell>
+
+              <TableCell className="whitespace-pre-line text-sm text-gray-700">
+                {pf.strengths}
+              </TableCell>
+
+              <TableCell className="whitespace-pre-line text-sm text-gray-700">
+                {pf.improvements}
+              </TableCell>
+
               <TableCell>
-                <div className="flex items-center gap-2 min-w-[100px]">
+                <div className="flex items-center gap-2 min-w-[120px]">
                   <Progress
                     value={pf.rating * 20}
-                    className={`w-24 h-2 ${pf.rating === 1
+                    className={`w-28 h-2 rounded-full shadow-inner ${pf.rating === 1
                         ? "bg-red-200 [&>div]:bg-red-500"
                         : pf.rating === 2
                           ? "bg-orange-200 [&>div]:bg-orange-500"
@@ -82,8 +97,7 @@ const PerformanceFactorsTable: React.FC<PerformanceFactorsTableProps> = ({
                               : "bg-green-200 [&>div]:bg-green-500"
                       }`}
                   />
-
-                  <span className="text-lg font-semibold">{pf.rating}/5</span>
+                  <span className="text-sm font-medium text-gray-800">{pf.rating}/5</span>
                 </div>
               </TableCell>
             </TableRow>
@@ -93,5 +107,6 @@ const PerformanceFactorsTable: React.FC<PerformanceFactorsTableProps> = ({
     </div>
   );
 };
+
 
 export default PerformanceFactorsTable;

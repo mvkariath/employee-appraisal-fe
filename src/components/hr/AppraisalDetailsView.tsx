@@ -33,7 +33,7 @@ const AppraisalDetailsView: React.FC<AppraisalDetailsViewProps> = ({
   selfAppraisal,
   performanceFactors,
 }) => (
-  <div className="flex flex-col gap-6 sm:gap-8 w-full max-w-4xl px-4 sm:px-0 mx-auto">
+  <div className="flex flex-col gap-6 sm:gap-8 w-full px-4 sm:px-0 mx-auto">
     {/* Self Appraisal Entry */}
     <Card className="shadow-none border">
       <CardHeader>

@@ -54,7 +54,7 @@ const EmployeeForm = ({
                 </DialogHeader>
 
 
-                <div className="p-6 md:p-12 max-w-5xl mx-auto mt-6 mb-12 bg-white rounded-xl shadow-inner space-y-8">
+                <div className="p-6 md:p-12 max-w-7xl mx-auto mt-6 mb-12 bg-white rounded-xl shadow-inner space-y-8">
                     <AppraisalDetailsView
                         selfAppraisal={selfAppraisalData}
                         performanceFactors={performanceFactorData}
