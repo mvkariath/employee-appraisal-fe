@@ -55,7 +55,7 @@ const Index = () => {
       status: "Planning",
       employees: 120,
       completed: 0,
-      progress: 0,
+      progress: 70,
     },
     {
       id: 3,
@@ -65,7 +65,7 @@ const Index = () => {
       status: "Upcoming",
       employees: 89,
       completed: 0,
-      progress: 0,
+      progress: 5,
     },
   ];
 
@@ -220,7 +220,20 @@ const Index = () => {
                           </span>
                           <span>{cycle.progress}%</span>
                         </div>
-                        <Progress value={cycle.progress} className="h-2" />
+                        <Progress
+                          value={cycle.progress}
+                          className={`h-2 
+                          ${cycle.progress <= 20
+                              ? "bg-red-200 [&>div]:bg-red-500"
+                              : cycle.progress <= 40
+                                ? "bg-orange-200 [&>div]:bg-orange-500"
+                                : cycle.progress <= 60
+                                  ? "bg-yellow-200 [&>div]:bg-yellow-500"
+                                  : cycle.progress <= 80
+                                    ? "bg-blue-200 [&>div]:bg-blue-500"
+                                    : "bg-green-200 [&>div]:bg-green-500"
+                            }`}
+                        />
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline">
                             View Details

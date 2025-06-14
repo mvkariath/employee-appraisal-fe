@@ -97,7 +97,7 @@ const Index = () => {
       competency: Competency.COMMUNICATION,
       strengths: "Clear communicator; explains complex topics simply.",
       improvements: "Can ask more clarifying questions in meetings.",
-      rating: 4,
+      rating: 3,
     },
   ]
 

@@ -69,7 +69,20 @@ const PerformanceFactorsTable: React.FC<PerformanceFactorsTableProps> = ({
               <TableCell className="whitespace-pre-line">{pf.improvements}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2 min-w-[100px]">
-                  <Progress className="w-24 h-2" value={pf.rating * 20} />
+                  <Progress
+                    value={pf.rating * 20}
+                    className={`w-24 h-2 ${pf.rating === 1
+                        ? "bg-red-200 [&>div]:bg-red-500"
+                        : pf.rating === 2
+                          ? "bg-orange-200 [&>div]:bg-orange-500"
+                          : pf.rating === 3
+                            ? "bg-yellow-200 [&>div]:bg-yellow-500"
+                            : pf.rating === 4
+                              ? "bg-blue-200 [&>div]:bg-blue-500"
+                              : "bg-green-200 [&>div]:bg-green-500"
+                      }`}
+                  />
+
                   <span className="text-lg font-semibold">{pf.rating}/5</span>
                 </div>
               </TableCell>
