@@ -28,11 +28,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Competency } from "@/components/hr/PerformanceFactorTable";
+import EmployeeForm from "./components/EmployeeForm";
 
 const Index = () => {
   const [activeView, setActiveView] = useState("dashboard");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [displayMode, setDisplayMode] = useState<"card" | "table">("card");
+  const [isViewForm, setIsViewForm] = useState(false);
 
   const employees = [
     {
@@ -68,7 +71,35 @@ const Index = () => {
       progress: 80,
       lead: "John Smith",
     },
-  ];
+  ]; const mockSelfAppraisal = {
+    delivery_details: "Delivered phase 1 of the mobile app successfully within the agreed timeline, collaborating cross-functionally.",
+    accomplishments: "Implemented new authentication flow, reduced load time by 30%, mentored two junior developers.",
+    approach_solution: "Adopted agile sprints, established daily syncs to align teams, and proactively addressed blockers.",
+    improvement_possibilities: "Could have conducted more user testing before release. Plan to involve QA earlier in the next cycle.",
+    project_time_frame: "January 2024 - March 2024",
+    leads: ['David Lopez']
+  }
+
+  const mockPerformanceFactor = [
+    {
+      competency: Competency.TECHNICAL,
+      strengths: "Excellent with TypeScript and React, strong debugging skills.",
+      improvements: "Could deepen cloud architecture expertise.",
+      rating: 5,
+    },
+    {
+      competency: Competency.FUNCTIONAL,
+      strengths: "Quickly understands business needs; delivers practical solutions.",
+      improvements: "Needs more domain-specific certifications.",
+      rating: 4,
+    },
+    {
+      competency: Competency.COMMUNICATION,
+      strengths: "Clear communicator; explains complex topics simply.",
+      improvements: "Can ask more clarifying questions in meetings.",
+      rating: 4,
+    },
+  ]
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -88,6 +119,9 @@ const Index = () => {
         return "bg-gray-100 text-gray-800";
     }
   };
+
+
+
 
   const renderCardView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -128,8 +162,7 @@ const Index = () => {
                 <Button
                   size="sm"
                   onClick={() => {
-                    setSelectedEmployee(employee);
-                    setActiveView("employee-form");
+                    setIsViewForm(true)
                   }}
                 >
                   <FileText className="h-4 w-4 mr-1" />
@@ -144,6 +177,12 @@ const Index = () => {
           </CardContent>
         </Card>
       ))}
+      <EmployeeForm
+        open={isViewForm}
+        onOpenChange={setIsViewForm}
+        selfAppraisalData={mockSelfAppraisal}
+        performanceFactorData={mockPerformanceFactor}
+      />
     </div>
   );
 
@@ -210,8 +249,7 @@ const Index = () => {
                     size="sm"
                     variant="ghost"
                     onClick={() => {
-                      setSelectedEmployee(employee);
-                      setActiveView("employee-form");
+                      setIsViewForm(true)
                     }}
                   >
                     <FileText className="h-4 w-4 mr-1" />
@@ -227,6 +265,12 @@ const Index = () => {
           ))}
         </tbody>
       </table>
+      <EmployeeForm
+        open={isViewForm}
+        onOpenChange={setIsViewForm}
+        selfAppraisalData={mockSelfAppraisal}
+        performanceFactorData={mockPerformanceFactor}
+      />
     </div>
   );
 

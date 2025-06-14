@@ -222,7 +222,7 @@ const AppraisalCycleModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="min-w-[80%] min-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Appraisal Cycle</DialogTitle>
           <DialogDescription>
