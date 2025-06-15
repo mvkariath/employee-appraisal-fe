@@ -21,6 +21,8 @@ import {
   Table,
   Grid,
   ArrowRight,
+  Video,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -35,10 +37,13 @@ import EmployeeForm from "./components/EmployeeForm";
 const Index = () => {
   const [activeView, setActiveView] = useState("dashboard");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [displayMode, setDisplayMode] = useState<"card" | "table">("card");
+  const [displayMode, setDisplayMode] = useState("card");
   const [isViewForm, setIsViewForm] = useState(false);
+  const [isIdpModalOpen, setIsIdpModalOpen] = useState(false);
+  const [currentIdpEmployee, setCurrentIdpEmployee] = useState(null);
+  const [showConfirmClose, setShowConfirmClose] = useState(false);
 
-  const employees = [
+  const [employees, setEmployees] = useState([
     {
       id: 1,
       name: "Sarah Johnson",
@@ -72,7 +77,7 @@ const Index = () => {
       progress: 80,
       lead: "John Smith",
     },
-  ];
+  ]);
 
   const mockSelfAppraisal = {
     delivery_details:
@@ -110,7 +115,7 @@ const Index = () => {
     },
   ];
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case "Active":
         return "bg-green-100 text-green-800";
@@ -124,13 +129,120 @@ const Index = () => {
         return "bg-yellow-100 text-yellow-800";
       case "Meeting Scheduled":
         return "bg-purple-100 text-purple-800";
+      case "Finished":
+        return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  const handlePushToLead = (employee: any) => {
+  const handlePushToLead = (employee) => {
     console.log(`Pushing ${employee.name} to lead: ${employee.lead}`);
+  };
+
+  const handleConductMeeting = (employee) => {
+    setCurrentIdpEmployee(employee);
+    setIsIdpModalOpen(true);
+  };
+
+  const handleCloseMeeting = () => {
+    setShowConfirmClose(true);
+  };
+
+  const confirmCloseMeeting = () => {
+    if (currentIdpEmployee) {
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          emp.id === currentIdpEmployee.id
+            ? { ...emp, stage: "Finished", progress: 100, status: "Finished" }
+            : emp
+        )
+      );
+    }
+    setIsIdpModalOpen(false);
+    setCurrentIdpEmployee(null);
+    setShowConfirmClose(false);
+  };
+
+  const cancelCloseMeeting = () => {
+    setShowConfirmClose(false);
+  };
+
+  const IdpModal = () => {
+    if (!isIdpModalOpen || !currentIdpEmployee) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+          <div className="flex justify-between items-center p-6 border-b">
+            <h2 className="text-xl font-semibold">
+              Individual Development Plan - {currentIdpEmployee.name}
+            </h2>
+            <button
+              onClick={() => setIsIdpModalOpen(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+            <div className="space-y-6">
+              <div className="text-center py-12">
+                <div className="text-gray-500 mb-4">
+                  <FileText className="h-16 w-16 mx-auto" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  IDP Form Component
+                </h3>
+                <p className="text-gray-600">
+                  This will be replaced with the IDP form component once the
+                  contributor's branch is merged.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
+            <Button variant="outline" onClick={() => setIsIdpModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCloseMeeting}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Close Meeting
+            </Button>
+          </div>
+        </div>
+
+        {showConfirmClose && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-60">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Confirm Close Meeting
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to close the meeting for{" "}
+                {currentIdpEmployee.name}? This will mark their review as
+                finished.
+              </p>
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={cancelCloseMeeting}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={confirmCloseMeeting}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  Yes, Close Meeting
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderCardView = () => (
@@ -182,7 +294,6 @@ const Index = () => {
                   <User className="h-4 w-4 mr-1" />
                   Contact
                 </Button>
-                {}
                 {employee.stage === "Lead Review" && (
                   <Button
                     size="sm"
@@ -192,6 +303,17 @@ const Index = () => {
                   >
                     <ArrowRight className="h-4 w-4 mr-1" />
                     Push to Lead
+                  </Button>
+                )}
+                {employee.stage === "Final Review" && (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => handleConductMeeting(employee)}
+                  >
+                    <Video className="h-4 w-4 mr-1" />
+                    Conduct Meeting
                   </Button>
                 )}
               </div>
@@ -293,6 +415,17 @@ const Index = () => {
                       Push to Lead
                     </Button>
                   )}
+                  {employee.stage === "Final Review" && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      onClick={() => handleConductMeeting(employee)}
+                    >
+                      <Video className="h-4 w-4 mr-1" />
+                      Conduct Meeting
+                    </Button>
+                  )}
                 </div>
               </td>
             </tr>
@@ -337,6 +470,7 @@ const Index = () => {
 
         {displayMode === "card" ? renderCardView() : renderTableView()}
       </div>
+      <IdpModal />
     </div>
   );
 
