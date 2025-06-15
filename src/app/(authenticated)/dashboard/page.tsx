@@ -10,6 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Calendar,
   Users,
   FileText,
@@ -20,23 +28,23 @@ import {
   Building2,
   PlusSquareIcon,
   PlusIcon,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 import AppraisalCycleModal from "@/components/hr/AppraisalCycleForm";
 
-// import EmployeeForm from "@/components/EmployeeForm";
-// import LeadEvaluation from "@/components/LeadEvaluation";
-// import MeetingNotes from "@/components/MeetingNotes";
-// import DevelopmentPlan from "@/components/DevelopmentPlan";
-
 const Index = () => {
   const [activeView, setActiveView] = useState("dashboard");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [closeCycleModal, setCloseCycleModal] = useState<{
+    open: boolean;
+    cycleId: number | null;
+  }>({ open: false, cycleId: null });
   const router = useRouter();
 
-  const appraisalCycles = [
+  const [appraisalCycles, setAppraisalCycles] = useState([
     {
       id: 1,
       name: "Q1 2024 Performance Review",
@@ -67,7 +75,7 @@ const Index = () => {
       completed: 0,
       progress: 5,
     },
-  ];
+  ]);
 
   const employees = [
     {
@@ -113,6 +121,8 @@ const Index = () => {
         return "bg-blue-100 text-blue-800";
       case "Upcoming":
         return "bg-gray-100 text-gray-800";
+      case "Closed":
+        return "bg-red-100 text-red-800";
       case "Self-Assessment Complete":
         return "bg-blue-100 text-blue-800";
       case "Pending Self-Assessment":
@@ -124,12 +134,26 @@ const Index = () => {
     }
   };
 
+  const handleCloseCycle = (cycleId: number) => {
+    setCloseCycleModal({ open: true, cycleId });
+  };
+
+  const confirmCloseCycle = () => {
+    setAppraisalCycles((prev) =>
+      prev.map((cycle) =>
+        cycle.id === closeCycleModal.cycleId
+          ? { ...cycle, status: "Closed" }
+          : cycle
+      )
+    );
+    setCloseCycleModal({ open: false, cycleId: null });
+  };
+
   const renderDashboard = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <div className="container mx-auto px-6 py-8">
-          {/* Header */}
           <div className="mb-8 flex justify-between">
             <div>
               <h1 className="text-4xl font-bold text-gray-900 mb-2">
@@ -148,7 +172,6 @@ const Index = () => {
             </Button>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
               <CardContent className="p-6">
@@ -185,7 +208,6 @@ const Index = () => {
             </Card>
           </div>
 
-          {/* Appraisal Cycles */}
           <div className="grid grid-cols-1  gap-8 mb-8">
             <div className="grid ">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">
@@ -223,30 +245,40 @@ const Index = () => {
                         <Progress
                           value={cycle.progress}
                           className={`h-2 
-                          ${cycle.progress <= 20
+                          ${
+                            cycle.progress <= 20
                               ? "bg-red-200 [&>div]:bg-red-500"
                               : cycle.progress <= 40
-                                ? "bg-orange-200 [&>div]:bg-orange-500"
-                                : cycle.progress <= 60
-                                  ? "bg-yellow-200 [&>div]:bg-yellow-500"
-                                  : cycle.progress <= 80
-                                    ? "bg-blue-200 [&>div]:bg-blue-500"
-                                    : "bg-green-200 [&>div]:bg-green-500"
-                            }`}
+                              ? "bg-orange-200 [&>div]:bg-orange-500"
+                              : cycle.progress <= 60
+                              ? "bg-yellow-200 [&>div]:bg-yellow-500"
+                              : cycle.progress <= 80
+                              ? "bg-blue-200 [&>div]:bg-blue-500"
+                              : "bg-green-200 [&>div]:bg-green-500"
+                          }`}
                         />
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline">
                             View Details
                           </Button>
                           {cycle.status === "Active" && (
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                router.push(`appraisal/${cycle.id}`);
-                              }}
-                            >
-                              Manage
-                            </Button>
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  router.push(`appraisal/${cycle.id}`);
+                                }}
+                              >
+                                Manage
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleCloseCycle(cycle.id)}
+                              >
+                                Close Cycle
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -255,49 +287,48 @@ const Index = () => {
                 ))}
               </div>
             </div>
-
-            {/* Employee Progress */}
           </div>
         </div>
+
         <AppraisalCycleModal
           open={isModalOpen}
           onOpenChange={setIsModalOpen}
           onSave={() => console.log("Save Cycle")}
         />
+
+        <Dialog
+          open={closeCycleModal.open}
+          onOpenChange={(open) => setCloseCycleModal({ open, cycleId: null })}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Close Appraisal Cycle</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to close this appraisal cycle? This action
+                cannot be undone and the cycle will no longer be manageable.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setCloseCycleModal({ open: false, cycleId: null })
+                }
+              >
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmCloseCycle}>
+                Close Cycle
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   };
 
   const renderActiveView = () => {
     switch (activeView) {
-      // case "employee-form":
-      //   return (
-      //     <EmployeeForm
-      //       employee={selectedEmployee}
-      //       onBack={() => setActiveView("dashboard")}
-      //     />
-      //   );
-      // case "lead-evaluation":
-      //   return (
-      //     <LeadEvaluation
-      //       employee={selectedEmployee}
-      //       onBack={() => setActiveView("dashboard")}
-      //     />
-      //   );
-      // case "meeting-notes":
-      //   return (
-      //     <MeetingNotes
-      //       employee={selectedEmployee}
-      //       onBack={() => setActiveView("dashboard")}
-      //     />
-      //   );
-      // case "development-plan":
-      //   return (
-      //     <DevelopmentPlan
-      //       employee={selectedEmployee}
-      //       onBack={() => setActiveView("dashboard")}
-      //     />
-      //   );
       default:
         return renderDashboard();
     }
