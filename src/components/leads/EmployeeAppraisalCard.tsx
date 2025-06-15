@@ -1,34 +1,45 @@
-"use client";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { useRouter } from "next/navigation"
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-
-interface EmployeeAppraisalCardProps {
+export interface EmployeeAppraisalCardProps {
   appraisal: {
-    employeeId: string;
-    employeeName: string;
-    dueDate: string;
-    progress: number;
-  };
+    employeeId: string
+    employeeName: string
+    dueDate: string
+    progress: number
+    status: "pending" | "in_progress" | "completed"
+  }
 }
 
 export const EmployeeAppraisalCard = ({ appraisal }: EmployeeAppraisalCardProps) => {
-  const router = useRouter();
+  const router = useRouter()
 
   const handleViewAppraisal = () => {
-    router.push(`/leads/appraisal/${appraisal.employeeId}`);
-  };
+    router.push(`/leads/appraisal/${appraisal.employeeId}`)
+  }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{appraisal.employeeName}</CardTitle>
-        <CardDescription>Due: {appraisal.dueDate}</CardDescription>
+      <CardHeader className="flex justify-between items-start">
+        <div>
+          <CardTitle>{appraisal.employeeName}</CardTitle>
+          <CardDescription>Due: {appraisal.dueDate}</CardDescription>
+        </div>
+        <Badge variant={
+          appraisal.status === "completed"
+            ? "success"
+            : appraisal.status === "in_progress"
+              ? "secondary"
+              : "outline"
+        }>
+          {appraisal.status.replace("_", " ")}
+        </Badge>
       </CardHeader>
       <CardContent>
-        <div>
+        <div className="mb-3">
           <div className="flex justify-between text-sm text-gray-600 mb-1">
             <span>Progress</span>
             <span>{appraisal.progress}%</span>
@@ -40,5 +51,5 @@ export const EmployeeAppraisalCard = ({ appraisal }: EmployeeAppraisalCardProps)
         <Button onClick={handleViewAppraisal} className="w-full">View Appraisal</Button>
       </CardFooter>
     </Card>
-  );
-};
+  )
+}

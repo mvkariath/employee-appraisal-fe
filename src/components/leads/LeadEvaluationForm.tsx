@@ -28,25 +28,25 @@ const competencies = [
 ];
 
 export const LeadEvaluationForm = () => {
-  const [isPastAppraisalsOpen, setIsPastAppraisalsOpen] = useState(false);
+  // const [isPastAppraisalsOpen, setIsPastAppraisalsOpen] = useState(false);
 
   // Mock data - replace with actual data from your API
-  const pastAppraisals: PastAppraisalSummary[] = [
-    {
-      id: "past-1",
-      team: "Frontend",
-      designation: "Junior Developer",
-      lead: "Mike Chen",
-      period: { from: "2023-07-01", to: "2023-12-31" },
-    },
-    {
-      id: "past-2",
-      team: "Frontend",
-      designation: "Intern",
-      lead: "Mike Chen",
-      period: { from: "2023-01-01", to: "2023-06-30" },
-    },
-  ];
+  // const pastAppraisals: PastAppraisalSummary[] = [
+  //   {
+  //     id: "past-1",
+  //     team: "Frontend",
+  //     designation: "Junior Developer",
+  //     lead: "Mike Chen",
+  //     period: { from: "2023-07-01", to: "2023-12-31" },
+  //   },
+  //   {
+  //     id: "past-2",
+  //     team: "Frontend",
+  //     designation: "Intern",
+  //     lead: "Mike Chen",
+  //     period: { from: "2023-01-01", to: "2023-06-30" },
+  //   },
+  // ];
 
   return (
     <>
@@ -89,7 +89,7 @@ export const LeadEvaluationForm = () => {
               ))}
             </TableBody>
           </Table>
-          <div className="flex justify-between mt-6">
+          {/* <div className="flex justify-between mt-6">
             <Button
               variant="outline"
               onClick={() => setIsPastAppraisalsOpen(true)}
@@ -101,13 +101,14 @@ export const LeadEvaluationForm = () => {
               <Button>Submit Evaluation</Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+     
       <PastAppraisalsModal
         open={isPastAppraisalsOpen}
         onOpenChange={setIsPastAppraisalsOpen}
         pastAppraisals={pastAppraisals}
-      />
+      /> */}
+         </CardContent>
+      </Card>
     </>
   );
 };
