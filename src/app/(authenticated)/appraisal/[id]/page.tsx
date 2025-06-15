@@ -20,6 +20,7 @@ import {
   Building2,
   Table,
   Grid,
+  ArrowRight,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -71,25 +72,33 @@ const Index = () => {
       progress: 80,
       lead: "John Smith",
     },
-  ]; const mockSelfAppraisal = {
-    delivery_details: "Delivered phase 1 of the mobile app successfully within the agreed timeline, collaborating cross-functionally.",
-    accomplishments: "Implemented new authentication flow, reduced load time by 30%, mentored two junior developers.",
-    approach_solution: "Adopted agile sprints, established daily syncs to align teams, and proactively addressed blockers.",
-    improvement_possibilities: "Could have conducted more user testing before release. Plan to involve QA earlier in the next cycle.",
+  ];
+
+  const mockSelfAppraisal = {
+    delivery_details:
+      "Delivered phase 1 of the mobile app successfully within the agreed timeline, collaborating cross-functionally.",
+    accomplishments:
+      "Implemented new authentication flow, reduced load time by 30%, mentored two junior developers.",
+    approach_solution:
+      "Adopted agile sprints, established daily syncs to align teams, and proactively addressed blockers.",
+    improvement_possibilities:
+      "Could have conducted more user testing before release. Plan to involve QA earlier in the next cycle.",
     project_time_frame: "January 2024 - March 2024",
-    leads: ['David Lopez']
-  }
+    leads: ["David Lopez"],
+  };
 
   const mockPerformanceFactor = [
     {
       competency: Competency.TECHNICAL,
-      strengths: "Excellent with TypeScript and React, strong debugging skills.",
+      strengths:
+        "Excellent with TypeScript and React, strong debugging skills.",
       improvements: "Could deepen cloud architecture expertise.",
       rating: 5,
     },
     {
       competency: Competency.FUNCTIONAL,
-      strengths: "Quickly understands business needs; delivers practical solutions.",
+      strengths:
+        "Quickly understands business needs; delivers practical solutions.",
       improvements: "Needs more domain-specific certifications.",
       rating: 4,
     },
@@ -99,7 +108,7 @@ const Index = () => {
       improvements: "Can ask more clarifying questions in meetings.",
       rating: 3,
     },
-  ]
+  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -120,8 +129,9 @@ const Index = () => {
     }
   };
 
-
-
+  const handlePushToLead = (employee: any) => {
+    console.log(`Pushing ${employee.name} to lead: ${employee.lead}`);
+  };
 
   const renderCardView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -158,11 +168,11 @@ const Index = () => {
                 <span className="text-gray-600">{employee.progress}%</span>
               </div>
               <Progress value={employee.progress} className="h-2" />
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   size="sm"
                   onClick={() => {
-                    setIsViewForm(true)
+                    setIsViewForm(true);
                   }}
                 >
                   <FileText className="h-4 w-4 mr-1" />
@@ -172,6 +182,18 @@ const Index = () => {
                   <User className="h-4 w-4 mr-1" />
                   Contact
                 </Button>
+                {}
+                {employee.stage === "Lead Review" && (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => handlePushToLead(employee)}
+                  >
+                    <ArrowRight className="h-4 w-4 mr-1" />
+                    Push to Lead
+                  </Button>
+                )}
               </div>
             </div>
           </CardContent>
@@ -244,12 +266,12 @@ const Index = () => {
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => {
-                      setIsViewForm(true)
+                      setIsViewForm(true);
                     }}
                   >
                     <FileText className="h-4 w-4 mr-1" />
@@ -259,6 +281,18 @@ const Index = () => {
                     <User className="h-4 w-4 mr-1" />
                     Contact
                   </Button>
+
+                  {employee.stage === "Lead Review" && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                      onClick={() => handlePushToLead(employee)}
+                    >
+                      <ArrowRight className="h-4 w-4 mr-1" />
+                      Push to Lead
+                    </Button>
+                  )}
                 </div>
               </td>
             </tr>
