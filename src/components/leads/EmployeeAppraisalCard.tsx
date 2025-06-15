@@ -29,13 +29,13 @@ export const EmployeeAppraisalCard = ({ appraisal }: EmployeeAppraisalCardProps)
           <CardDescription>Due: {appraisal.dueDate}</CardDescription>
         </div>
         <Badge variant={
-          appraisal.status === "completed"
-            ? "success"
-            : appraisal.status === "in_progress"
+          appraisal?.status === "completed"
+            ? "default"
+            : appraisal?.status === "in_progress"
               ? "secondary"
               : "outline"
         }>
-          {appraisal.status.replace("_", " ")}
+  {appraisal?.status ? appraisal.status.replace("_", " ") : "N/A"}
         </Badge>
       </CardHeader>
       <CardContent>
