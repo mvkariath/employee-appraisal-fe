@@ -1,50 +1,88 @@
-// app/employee/appraisals/components/EmployeeSelfAppraisalModal.tsx
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { MultiSelect } from '@/components/ui/muli-select';
-import { X, Plus } from 'lucide-react';
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Trash2, X } from "lucide-react";
+
+interface EmployeeData {
+  name: string;
+  designation: string;
+  employeeNumber: string;
+  team: string;
+}
+
+interface SelfAssessment {
+  deliveryDetails: string;
+  accomplishments: string;
+  approaches: string;
+  improvements: string;
+  timeFrame: string;
+}
+
+interface PerformanceFactor {
+  competency: string;
+  strengths: string;
+  improvementNeeds: string;
+  rating: string;
+}
+
+interface IndividualDevelopmentPlan {
+  technical: string;
+  behavioral: string;
+  functional: string;
+}
+
+interface FormData {
+  leadNames: string[];
+  selfAssessments: SelfAssessment[];
+  performanceFactors: PerformanceFactor[];
+  individualDevelopmentPlan: IndividualDevelopmentPlan;
+  additionalRemarks: string;
+}
 
 interface EmployeeSelfAppraisalModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: FormData, action: 'save' | 'submit') => void;
-  employeeData: {
-    name: string;
-    designation: string;
-    employeeNumber: string;
-    team: string;
-  };
+  employeeData: EmployeeData;
   leadOptions: string[];
   isReadOnly?: boolean;
-  initialData?: any;
+  initialData?: FormData;
+  isSubmitted?: boolean; // New prop to track if form has been submitted
 }
 
-interface FormData {
-  leadNames: string[];
-  assessments: {
-    deliveryDetails: string;
-    accomplishments: string;
-    approaches: string;
-    improvements: string;
-    timeFrame: string;
-  }[];
-  developmentPlan?: string;  // Filled by HR/Lead (read-only for employee)
-  remarks?: string;
-}
+const defaultFormData: FormData = {
+  leadNames: [],
+  selfAssessments: [{
+    deliveryDetails: '',
+    accomplishments: '',
+    approaches: '',
+    improvements: '',
+    timeFrame: ''
+  }],
+  performanceFactors: [
+    { competency: 'Technical', strengths: '', improvementNeeds: '', rating: '' },
+    { competency: 'Functional', strengths: '', improvementNeeds: '', rating: '' },
+    { competency: 'Communication', strengths: '', improvementNeeds: '', rating: '' },
+    { competency: 'Energy & Drive', strengths: '', improvementNeeds: '', rating: '' },
+    { competency: 'Responsibilities & Trust', strengths: '', improvementNeeds: '', rating: '' },
+    { competency: 'Teamwork', strengths: '', improvementNeeds: '', rating: '' },
+    { competency: 'Managing Processes & Work', strengths: '', improvementNeeds: '', rating: '' }
+  ],
+  individualDevelopmentPlan: {
+    technical: '',
+    behavioral: '',
+    functional: ''
+  },
+  additionalRemarks: ''
+};
 
 export default function EmployeeSelfAppraisalModal({
   isOpen,
@@ -54,32 +92,35 @@ export default function EmployeeSelfAppraisalModal({
   leadOptions,
   isReadOnly = false,
   initialData,
+  isSubmitted = false, // Default to false for new forms
 }: EmployeeSelfAppraisalModalProps) {
-  const [formData, setFormData] = useState<FormData>(initialData || {
-    leadNames: [],
-    assessments: [{
-      deliveryDetails: '',
-      accomplishments: '',
-      approaches: '',
-      improvements: '',
-      timeFrame: ''
-    }],
-    developmentPlan: '',
-    remarks: ''
-  });
-  const handleAssessmentChange = (index: number, field: keyof FormData['assessments'][0], value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      assessments: prev.assessments.map((item, i) => 
-        i === index ? { ...item, [field]: value } : item
-      )
-    }));
-  };
+  const [formData, setFormData] = useState<FormData>({ ...defaultFormData });
+
+  // Update form data when modal opens or initialData changes
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        console.log('Loading initial data:', initialData);
+        // Deep clone the initial data to avoid reference issues
+        setFormData({
+          leadNames: [...(initialData.leadNames || [])],
+          selfAssessments: initialData.selfAssessments?.map(assessment => ({ ...assessment })) || [{ ...defaultFormData.selfAssessments[0] }],
+          performanceFactors: initialData.performanceFactors?.map(factor => ({ ...factor })) || [...defaultFormData.performanceFactors],
+          individualDevelopmentPlan: { ...(initialData.individualDevelopmentPlan || defaultFormData.individualDevelopmentPlan) },
+          additionalRemarks: initialData.additionalRemarks || ''
+        });
+      } else {
+        console.log('No initial data, using defaults');
+        setFormData({ ...defaultFormData });
+      }
+    }
+  }, [isOpen, initialData]);
+
   const addAssessment = () => {
     setFormData(prev => ({
       ...prev,
-      assessments: [
-        ...prev.assessments,
+      selfAssessments: [
+        ...prev.selfAssessments,
         {
           deliveryDetails: '',
           accomplishments: '',
@@ -90,54 +131,99 @@ export default function EmployeeSelfAppraisalModal({
       ]
     }));
   };
+
   const removeAssessment = (index: number) => {
-    if (formData.assessments.length <= 1) return;
+    if (formData.selfAssessments.length <= 1) return;
+    
     setFormData(prev => ({
       ...prev,
-      assessments: prev.assessments.filter((_, i) => i !== index)
+      selfAssessments: prev.selfAssessments.filter((_, i) => i !== index)
     }));
   };
-   const toggleLead = (lead: string) => {
+
+  const handleAssessmentChange = (index: number, field: keyof SelfAssessment, value: string) => {
+    setFormData(prev => {
+      const updatedAssessments = [...prev.selfAssessments];
+      updatedAssessments[index] = {
+        ...updatedAssessments[index],
+        [field]: value
+      };
+      return {
+        ...prev,
+        selfAssessments: updatedAssessments
+      };
+    });
+  };
+
+  const handlePerformanceFactorChange = (index: number, field: keyof PerformanceFactor, value: string) => {
+    setFormData(prev => {
+      const updatedFactors = [...prev.performanceFactors];
+      updatedFactors[index] = {
+        ...updatedFactors[index],
+        [field]: value
+      };
+      return {
+        ...prev,
+        performanceFactors: updatedFactors
+      };
+    });
+  };
+
+  const handleDevelopmentPlanChange = (field: keyof IndividualDevelopmentPlan, value: string) => {
     setFormData(prev => ({
       ...prev,
-      leadNames: prev.leadNames.includes(lead)
-        ? prev.leadNames.filter(l => l !== lead)
-        : [...prev.leadNames, lead]
+      individualDevelopmentPlan: {
+        ...prev.individualDevelopmentPlan,
+        [field]: value
+      }
     }));
   };
-  const handleArrayChange = (field: string, index: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: (prev[field as keyof FormData] as string[]).map((item: string, i: number) => 
-        i === index ? value : item
-    )}));
+
+  const handleLeadSelection = (leadName: string, checked: boolean) => {
+    setFormData(prev => {
+      const updatedLeadNames = checked 
+        ? [...prev.leadNames, leadName]
+        : prev.leadNames.filter(name => name !== leadName);
+      
+      return {
+        ...prev,
+        leadNames: updatedLeadNames
+      };
+    });
   };
 
-  // const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-  //   const { name, value } = e.target;
-  //   setFormData(prev => ({ ...prev, [name]: value }));
-  // };
+  const removeLead = (leadName: string) => {
+    setFormData(prev => ({
+      ...prev,
+      leadNames: prev.leadNames.filter(name => name !== leadName)
+    }));
+  };
 
-  // const handleLeadChange = (selectedLeads: string[]) => {
-  //   setFormData(prev => ({ ...prev, leadNames: selectedLeads }));
-  // };
+  const handleSubmitForm = (action: 'save' | 'submit') => {
+    // Create a deep copy of the current form data to ensure all changes are captured
+    const dataToSubmit: FormData = {
+      leadNames: [...formData.leadNames],
+      selfAssessments: formData.selfAssessments.map(assessment => ({ ...assessment })),
+      performanceFactors: formData.performanceFactors.map(factor => ({ ...factor })),
+      individualDevelopmentPlan: { ...formData.individualDevelopmentPlan },
+      additionalRemarks: formData.additionalRemarks
+    };
+    
+    console.log(`${action === 'save' ? 'Saving draft' : 'Submitting'}:`, dataToSubmit);
+    onSubmit(dataToSubmit, action);
+  };
 
-  // const handleAction = (action: 'save' | 'submit') => (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   onSubmit(formData, action);
-  //   if (action === 'submit') onClose();
-  // };
+  const handleClose = () => {
+    onClose();
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="!w-[95vw] !h-[90vh] !max-w-none overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="!max-w-none !w-[90vw] !h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isReadOnly ? 'View Appraisal' : 'Employee Self Appraisal'}
+            {isReadOnly ? 'Performance Appraisal Form' : 'Employee Self Appraisal'}
           </DialogTitle>
-          <DialogDescription className="sr-only">
-            Employee performance assessment form
-          </DialogDescription>
         </DialogHeader>
 
         {/* Employee Information */}
@@ -151,165 +237,360 @@ export default function EmployeeSelfAppraisalModal({
             <p className="font-medium">{employeeData.designation}</p>
           </div>
           <div>
+            <Label className="text-gray-500">Employee Number</Label>
+            <p className="font-medium">{employeeData.employeeNumber}</p>
+          </div>
+          <div>
             <Label className="text-gray-500">Team</Label>
             <p className="font-medium">{employeeData.team}</p>
           </div>
-          
-          {/* Lead Selection */}
-          <div className="md:col-span-3">
-            <Label>Leads</Label>
-            {isReadOnly ? (
-              <div className="flex flex-wrap gap-2 mt-1">
-                {formData.leadNames.map(lead => (
-                  <Badge key={lead} variant="secondary">
-                    {lead}
-                  </Badge>
+        </div>
+
+        {/* Lead Selection */}
+        <div className="mb-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">Select Lead(s)</h3>
+            {!isReadOnly && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-4 bg-gray-50 rounded-lg">
+                {leadOptions.map((lead) => (
+                  <div key={lead} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`lead-${lead}`}
+                      checked={formData.leadNames.includes(lead)}
+                      onCheckedChange={(checked) => handleLeadSelection(lead, checked as boolean)}
+                    />
+                    <Label htmlFor={`lead-${lead}`} className="text-sm font-medium">
+                      {lead}
+                    </Label>
+                  </div>
                 ))}
               </div>
-            ) : (
-              <div className="flex flex-wrap gap-2 mt-1">
-                {leadOptions.map(lead => (
-                  <Button
-                    key={lead}
-                    variant={formData.leadNames.includes(lead) ? "default" : "outline"}
-                    size="sm"
-                    type="button"
-                    onClick={() => toggleLead(lead)}
-                  >
-                    {lead}
-                  </Button>
-                ))}
+            )}
+            
+            {/* Selected Leads Display */}
+            {formData.leadNames.length > 0 && (
+              <div className="mt-3">
+                <Label className="text-sm text-gray-600">Selected Lead(s):</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {formData.leadNames.map((leadName) => (
+                    <Badge key={leadName} variant="secondary" className="flex items-center gap-1">
+                      {leadName}
+                      {!isReadOnly && (
+                        <X 
+                          className="h-3 w-3 cursor-pointer hover:text-red-500" 
+                          onClick={() => removeLead(leadName)}
+                        />
+                      )}
+                    </Badge>
+                  ))}
+                </div>
               </div>
+            )}
+            
+            {formData.leadNames.length === 0 && (
+              <p className="text-sm text-gray-500 mt-2">
+                {isReadOnly ? 'No leads selected' : 'Please select at least one lead'}
+              </p>
             )}
           </div>
         </div>
 
-        {/* Self Assessment Section */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">Self Assessment</h3>
-          {formData.assessments.map((assessment, index) => (
-            <div key={index} className="space-y-4 mb-6 p-4 border rounded-lg">
-              {!isReadOnly && formData.assessments.length > 1 && (
-                <div className="flex justify-end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    type="button"
-                    onClick={() => removeAssessment(index)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Delivery Details</Label>
-                  {isReadOnly ? (
-                    <p className="mt-1">{assessment.deliveryDetails || '-'}</p>
-                  ) : (
-                    <Input
-                      value={assessment.deliveryDetails}
-                      onChange={(e) => handleAssessmentChange(index, 'deliveryDetails', e.target.value)}
-                      required
-                    />
+        {/* 1. Employee Self Assessment */}
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">1. Employee Self Assessment</h3>
+            {!isReadOnly && (
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm"
+                onClick={addAssessment}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Assessment
+              </Button>
+            )}
+          </div>
+          
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]">SN</TableHead>
+                <TableHead>Delivery Details</TableHead>
+                <TableHead>Highlights of Accomplishments</TableHead>
+                <TableHead>Approach/Solution taken</TableHead>
+                <TableHead>Improvement possibilities</TableHead>
+                <TableHead>Time frame</TableHead>
+                {!isReadOnly && <TableHead className="w-[50px]">Action</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {formData.selfAssessments.map((assessment, index) => (
+                <TableRow key={index}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>
+                    {isReadOnly ? (
+                      <p className="p-2 bg-gray-50 rounded min-h-[40px]">{assessment.deliveryDetails || '-'}</p>
+                    ) : (
+                      <Textarea 
+                        value={assessment.deliveryDetails}
+                        onChange={(e) => handleAssessmentChange(index, 'deliveryDetails', e.target.value)}
+                        placeholder="Enter delivery details..."
+                        className="min-h-[80px]"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isReadOnly ? (
+                      <p className="p-2 bg-gray-50 rounded min-h-[40px]">{assessment.accomplishments || '-'}</p>
+                    ) : (
+                      <Textarea 
+                        value={assessment.accomplishments}
+                        onChange={(e) => handleAssessmentChange(index, 'accomplishments', e.target.value)}
+                        placeholder="Enter accomplishments..."
+                        className="min-h-[80px]"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isReadOnly ? (
+                      <p className="p-2 bg-gray-50 rounded min-h-[40px]">{assessment.approaches || '-'}</p>
+                    ) : (
+                      <Textarea 
+                        value={assessment.approaches}
+                        onChange={(e) => handleAssessmentChange(index, 'approaches', e.target.value)}
+                        placeholder="Enter approach/solution..."
+                        className="min-h-[80px]"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isReadOnly ? (
+                      <p className="p-2 bg-gray-50 rounded min-h-[40px]">{assessment.improvements || '-'}</p>
+                    ) : (
+                      <Textarea 
+                        value={assessment.improvements}
+                        onChange={(e) => handleAssessmentChange(index, 'improvements', e.target.value)}
+                        placeholder="Enter improvement possibilities..."
+                        className="min-h-[80px]"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isReadOnly ? (
+                      <p className="p-2 bg-gray-50 rounded min-h-[40px]">{assessment.timeFrame || '-'}</p>
+                    ) : (
+                      <Input 
+                        value={assessment.timeFrame}
+                        onChange={(e) => handleAssessmentChange(index, 'timeFrame', e.target.value)}
+                        placeholder="Enter time frame..."
+                      />
+                    )}
+                  </TableCell>
+                  {!isReadOnly && (
+                    <TableCell>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeAssessment(index)}
+                        disabled={formData.selfAssessments.length <= 1}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </TableCell>
                   )}
-                </div>
-                <div>
-                  <Label>Accomplishments</Label>
-                  {isReadOnly ? (
-                    <p className="mt-1">{assessment.accomplishments || '-'}</p>
-                  ) : (
-                    <Input
-                      value={assessment.accomplishments}
-                      onChange={(e) => handleAssessmentChange(index, 'accomplishments', e.target.value)}
-                      required
-                    />
-                  )}
-                </div>
-                <div>
-                  <Label>Approach/Solution</Label>
-                  {isReadOnly ? (
-                    <p className="mt-1">{assessment.approaches || '-'}</p>
-                  ) : (
-                    <Input
-                      value={assessment.approaches}
-                      onChange={(e) => handleAssessmentChange(index, 'approaches', e.target.value)}
-                    />
-                  )}
-                </div>
-                <div>
-                  <Label>Improvement Possibilities</Label>
-                  {isReadOnly ? (
-                    <p className="mt-1">{assessment.improvements || '-'}</p>
-                  ) : (
-                    <Input
-                      value={assessment.improvements}
-                      onChange={(e) => handleAssessmentChange(index, 'improvements', e.target.value)}
-                    />
-                  )}
-                </div>
-                <div>
-                  <Label>Time Frame</Label>
-                  {isReadOnly ? (
-                    <p className="mt-1">{assessment.timeFrame || '-'}</p>
-                  ) : (
-                    <Input
-                      value={assessment.timeFrame}
-                      onChange={(e) => handleAssessmentChange(index, 'timeFrame', e.target.value)}
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {!isReadOnly && (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={addAssessment}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Another Assessment
-            </Button>
-          )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
 
-        {/* Development Plan (Read-only for employee) */}
-        {formData.developmentPlan && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Development Plan</h3>
-            <p className="whitespace-pre-wrap">
-              {formData.developmentPlan}
+        {/* Show a message when form is not yet submitted */}
+        {/* {!isSubmitted && !isReadOnly && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-blue-800 text-sm">
+              <strong>Note:</strong> Performance Factors, Individual Development Plan, and Additional Remarks sections will be available after you submit the form.
             </p>
+          </div>
+        )} */}
+
+        {/* 2. Performance Factors - Only show if submitted or read-only */}
+        {(isSubmitted || isReadOnly) && (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4">2. Performance Factors</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]">S#</TableHead>
+                  <TableHead>Competencies</TableHead>
+                  <TableHead>Strengths</TableHead>
+                  <TableHead>Improvement Needs</TableHead>
+                  <TableHead>Rating (1-10)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {formData.performanceFactors.map((factor, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell className="font-medium">{factor.competency}</TableCell>
+                    <TableCell>
+                      {isReadOnly ? (
+                        <p className="p-2 bg-gray-50 rounded min-h-[40px]">{factor.strengths || '-'}</p>
+                      ) : (
+                        <Textarea 
+                          value={factor.strengths}
+                          onChange={(e) => handlePerformanceFactorChange(index, 'strengths', e.target.value)}
+                          placeholder="Enter strengths..."
+                          className="min-h-[80px]"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isReadOnly ? (
+                        <p className="p-2 bg-gray-50 rounded min-h-[40px]">{factor.improvementNeeds || '-'}</p>
+                      ) : (
+                        <Textarea 
+                          value={factor.improvementNeeds}
+                          onChange={(e) => handlePerformanceFactorChange(index, 'improvementNeeds', e.target.value)}
+                          placeholder="Enter improvement needs..."
+                          className="min-h-[80px]"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isReadOnly ? (
+                        <p className="p-2 bg-gray-50 rounded min-h-[40px]">{factor.rating || '-'}</p>
+                      ) : (
+                        <Input 
+                          type="number" 
+                          min="1" 
+                          max="10" 
+                          value={factor.rating} 
+                          onChange={(e) => handlePerformanceFactorChange(index, 'rating', e.target.value)}
+                          placeholder="1-10"
+                        />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )}
 
-        {/* Remarks (Read-only for employee) */}
-        {formData.remarks && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Remarks</h3>
-            <p className="whitespace-pre-wrap">
-              {formData.remarks}
-            </p>
+        {/* 3. Individual Development Plan - Only show if submitted or read-only */}
+        {(isSubmitted || isReadOnly) && (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4">3. Individual Development Plan (IDP)</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Individual Objectives</TableHead>
+                  <TableHead>Development plan</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium">Technical</TableCell>
+                  <TableCell>
+                    {isReadOnly ? (
+                      <p className="p-2 bg-gray-50 rounded min-h-[40px]">{formData.individualDevelopmentPlan.technical || '-'}</p>
+                    ) : (
+                      <Textarea 
+                        value={formData.individualDevelopmentPlan.technical}
+                        onChange={(e) => handleDevelopmentPlanChange('technical', e.target.value)}
+                        placeholder="Enter technical development plan..."
+                        className="min-h-[80px]"
+                      />
+                    )}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Behavioral</TableCell>
+                  <TableCell>
+                    {isReadOnly ? (
+                      <p className="p-2 bg-gray-50 rounded min-h-[40px]">{formData.individualDevelopmentPlan.behavioral || '-'}</p>
+                    ) : (
+                      <Textarea 
+                        value={formData.individualDevelopmentPlan.behavioral}
+                        onChange={(e) => handleDevelopmentPlanChange('behavioral', e.target.value)}
+                        placeholder="Enter behavioral development plan..."
+                        className="min-h-[80px]"
+                      />
+                    )}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Functional</TableCell>
+                  <TableCell>
+                    {isReadOnly ? (
+                      <p className="p-2 bg-gray-50 rounded min-h-[40px]">{formData.individualDevelopmentPlan.functional || '-'}</p>
+                    ) : (
+                      <Textarea 
+                        value={formData.individualDevelopmentPlan.functional}
+                        onChange={(e) => handleDevelopmentPlanChange('functional', e.target.value)}
+                        placeholder="Enter functional development plan..."
+                        className="min-h-[80px]"
+                      />
+                    )}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        {/* 4. Additional Remarks - Only show if submitted or read-only */}
+        {(isSubmitted || isReadOnly) && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-2">4. Additional Remarks</h3>
+            {isReadOnly ? (
+              <p className="p-4 bg-gray-50 rounded min-h-[100px]">
+                {formData.additionalRemarks || 'No additional remarks'}
+              </p>
+            ) : (
+              <Textarea
+                value={formData.additionalRemarks}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  additionalRemarks: e.target.value
+                }))}
+                placeholder="Optional remarks..."
+                className="min-h-[100px]"
+              />
+            )}
           </div>
         )}
 
         {!isReadOnly && (
-          <div className="flex justify-end gap-2">
-            <Button 
-    variant="outline" 
-    onClick={() => onSubmit(formData, 'save')}
-  >
-    Save Draft
-  </Button>
-  <Button 
-    onClick={() => onSubmit(formData, 'submit')}
-  >
-    Submit
-  </Button>
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            {!isSubmitted ? (
+              // Before submission: Show Save Draft and Submit buttons
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleSubmitForm('save')}
+                  type="button"
+                >
+                  Save Draft
+                </Button>
+                <Button 
+                  onClick={() => handleSubmitForm('submit')}
+                  type="button"
+                >
+                  Submit Appraisal
+                </Button>
+              </>
+            ) : (
+              // After submission: Show Update button
+              <Button 
+                onClick={() => handleSubmitForm('submit')}
+                type="button"
+              >
+                Update Appraisal
+              </Button>
+            )}
           </div>
         )}
       </DialogContent>
