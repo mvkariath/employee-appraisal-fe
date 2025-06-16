@@ -55,7 +55,7 @@ interface EmployeeSelfAppraisalModalProps {
   leadOptions: string[];
   isReadOnly?: boolean;
   initialData?: FormData;
-  isSubmitted?: boolean; // New prop to track if form has been submitted
+  isSubmitted?: boolean;
 }
 
 const defaultFormData: FormData = {
@@ -92,16 +92,14 @@ export default function EmployeeSelfAppraisalModal({
   leadOptions,
   isReadOnly = false,
   initialData,
-  isSubmitted = false, // Default to false for new forms
+  isSubmitted = false,
 }: EmployeeSelfAppraisalModalProps) {
   const [formData, setFormData] = useState<FormData>({ ...defaultFormData });
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Update form data when modal opens or initialData changes
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        console.log('Loading initial data:', initialData);
-        // Deep clone the initial data to avoid reference issues
         setFormData({
           leadNames: [...(initialData.leadNames || [])],
           selfAssessments: initialData.selfAssessments?.map(assessment => ({ ...assessment })) || [{ ...defaultFormData.selfAssessments[0] }],
@@ -110,13 +108,53 @@ export default function EmployeeSelfAppraisalModal({
           additionalRemarks: initialData.additionalRemarks || ''
         });
       } else {
-        console.log('No initial data, using defaults');
         setFormData({ ...defaultFormData });
       }
+      setErrors({});
     }
   }, [isOpen, initialData]);
 
+  const validateForm = (): boolean => {
+    const newErrors: { [key: string]: string } = {};
+
+    // Lead selection
+    if (formData.leadNames.length === 0) {
+      newErrors.leadNames = "At least one lead must be selected";
+    }
+
+    // Self Assessments
+    formData.selfAssessments.forEach((assessment, idx) => {
+      if (!assessment.deliveryDetails) newErrors[`selfAssessments.${idx}.deliveryDetails`] = "Required";
+      if (!assessment.accomplishments) newErrors[`selfAssessments.${idx}.accomplishments`] = "Required";
+      if (!assessment.approaches) newErrors[`selfAssessments.${idx}.approaches`] = "Required";
+      if (!assessment.improvements) newErrors[`selfAssessments.${idx}.improvements`] = "Required";
+      if (!assessment.timeFrame) newErrors[`selfAssessments.${idx}.timeFrame`] = "Required";
+    });
+
+    // Performance Factors (only if visible)
+    if (isSubmitted || isReadOnly) {
+      formData.performanceFactors.forEach((factor, idx) => {
+        if (!factor.strengths) newErrors[`performanceFactors.${idx}.strengths`] = "Required";
+        if (!factor.improvementNeeds) newErrors[`performanceFactors.${idx}.improvementNeeds`] = "Required";
+        if (!factor.rating) newErrors[`performanceFactors.${idx}.rating`] = "Required";
+      });
+
+      // Individual Development Plan
+      if (!formData.individualDevelopmentPlan.technical) newErrors['individualDevelopmentPlan.technical'] = "Required";
+      if (!formData.individualDevelopmentPlan.behavioral) newErrors['individualDevelopmentPlan.behavioral'] = "Required";
+      if (!formData.individualDevelopmentPlan.functional) newErrors['individualDevelopmentPlan.functional'] = "Required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const canAddAssessment = formData.selfAssessments.every(
+    a => a.deliveryDetails && a.accomplishments && a.approaches && a.improvements && a.timeFrame
+  );
+
   const addAssessment = () => {
+    if (!canAddAssessment) return;
     setFormData(prev => ({
       ...prev,
       selfAssessments: [
@@ -134,7 +172,6 @@ export default function EmployeeSelfAppraisalModal({
 
   const removeAssessment = (index: number) => {
     if (formData.selfAssessments.length <= 1) return;
-    
     setFormData(prev => ({
       ...prev,
       selfAssessments: prev.selfAssessments.filter((_, i) => i !== index)
@@ -153,6 +190,11 @@ export default function EmployeeSelfAppraisalModal({
         selfAssessments: updatedAssessments
       };
     });
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[`selfAssessments.${index}.${field}`];
+      return newErrors;
+    });
   };
 
   const handlePerformanceFactorChange = (index: number, field: keyof PerformanceFactor, value: string) => {
@@ -167,6 +209,11 @@ export default function EmployeeSelfAppraisalModal({
         performanceFactors: updatedFactors
       };
     });
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[`performanceFactors.${index}.${field}`];
+      return newErrors;
+    });
   };
 
   const handleDevelopmentPlanChange = (field: keyof IndividualDevelopmentPlan, value: string) => {
@@ -177,6 +224,11 @@ export default function EmployeeSelfAppraisalModal({
         [field]: value
       }
     }));
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[`individualDevelopmentPlan.${field}`];
+      return newErrors;
+    });
   };
 
   const handleLeadSelection = (leadName: string, checked: boolean) => {
@@ -184,11 +236,15 @@ export default function EmployeeSelfAppraisalModal({
       const updatedLeadNames = checked 
         ? [...prev.leadNames, leadName]
         : prev.leadNames.filter(name => name !== leadName);
-      
       return {
         ...prev,
         leadNames: updatedLeadNames
       };
+    });
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors.leadNames;
+      return newErrors;
     });
   };
 
@@ -200,7 +256,9 @@ export default function EmployeeSelfAppraisalModal({
   };
 
   const handleSubmitForm = (action: 'save' | 'submit') => {
-    // Create a deep copy of the current form data to ensure all changes are captured
+    if (action === 'submit' && !validateForm()) {
+      return;
+    }
     const dataToSubmit: FormData = {
       leadNames: [...formData.leadNames],
       selfAssessments: formData.selfAssessments.map(assessment => ({ ...assessment })),
@@ -208,8 +266,6 @@ export default function EmployeeSelfAppraisalModal({
       individualDevelopmentPlan: { ...formData.individualDevelopmentPlan },
       additionalRemarks: formData.additionalRemarks
     };
-    
-    console.log(`${action === 'save' ? 'Saving draft' : 'Submitting'}:`, dataToSubmit);
     onSubmit(dataToSubmit, action);
   };
 
@@ -266,7 +322,9 @@ export default function EmployeeSelfAppraisalModal({
                 ))}
               </div>
             )}
-            
+            {errors.leadNames && (
+              <p className="text-xs text-red-500 mt-1">{errors.leadNames}</p>
+            )}
             {/* Selected Leads Display */}
             {formData.leadNames.length > 0 && (
               <div className="mt-3">
@@ -286,7 +344,6 @@ export default function EmployeeSelfAppraisalModal({
                 </div>
               </div>
             )}
-            
             {formData.leadNames.length === 0 && (
               <p className="text-sm text-gray-500 mt-2">
                 {isReadOnly ? 'No leads selected' : 'Please select at least one lead'}
@@ -305,6 +362,7 @@ export default function EmployeeSelfAppraisalModal({
                 variant="outline" 
                 size="sm"
                 onClick={addAssessment}
+                disabled={!canAddAssessment}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Assessment
@@ -332,59 +390,84 @@ export default function EmployeeSelfAppraisalModal({
                     {isReadOnly ? (
                       <p className="p-2 bg-gray-50 rounded min-h-[40px]">{assessment.deliveryDetails || '-'}</p>
                     ) : (
-                      <Textarea 
-                        value={assessment.deliveryDetails}
-                        onChange={(e) => handleAssessmentChange(index, 'deliveryDetails', e.target.value)}
-                        placeholder="Enter delivery details..."
-                        className="min-h-[80px]"
-                      />
+                      <>
+                        <Textarea 
+                          value={assessment.deliveryDetails}
+                          onChange={(e) => handleAssessmentChange(index, 'deliveryDetails', e.target.value)}
+                          placeholder="Enter delivery details..."
+                          className="min-h-[80px]"
+                        />
+                        {errors[`selfAssessments.${index}.deliveryDetails`] && (
+                          <p className="text-xs text-red-500">{errors[`selfAssessments.${index}.deliveryDetails`]}</p>
+                        )}
+                      </>
                     )}
                   </TableCell>
                   <TableCell>
                     {isReadOnly ? (
                       <p className="p-2 bg-gray-50 rounded min-h-[40px]">{assessment.accomplishments || '-'}</p>
                     ) : (
-                      <Textarea 
-                        value={assessment.accomplishments}
-                        onChange={(e) => handleAssessmentChange(index, 'accomplishments', e.target.value)}
-                        placeholder="Enter accomplishments..."
-                        className="min-h-[80px]"
-                      />
+                      <>
+                        <Textarea 
+                          value={assessment.accomplishments}
+                          onChange={(e) => handleAssessmentChange(index, 'accomplishments', e.target.value)}
+                          placeholder="Enter accomplishments..."
+                          className="min-h-[80px]"
+                        />
+                        {errors[`selfAssessments.${index}.accomplishments`] && (
+                          <p className="text-xs text-red-500">{errors[`selfAssessments.${index}.accomplishments`]}</p>
+                        )}
+                      </>
                     )}
                   </TableCell>
                   <TableCell>
                     {isReadOnly ? (
                       <p className="p-2 bg-gray-50 rounded min-h-[40px]">{assessment.approaches || '-'}</p>
                     ) : (
-                      <Textarea 
-                        value={assessment.approaches}
-                        onChange={(e) => handleAssessmentChange(index, 'approaches', e.target.value)}
-                        placeholder="Enter approach/solution..."
-                        className="min-h-[80px]"
-                      />
+                      <>
+                        <Textarea 
+                          value={assessment.approaches}
+                          onChange={(e) => handleAssessmentChange(index, 'approaches', e.target.value)}
+                          placeholder="Enter approach/solution..."
+                          className="min-h-[80px]"
+                        />
+                        {errors[`selfAssessments.${index}.approaches`] && (
+                          <p className="text-xs text-red-500">{errors[`selfAssessments.${index}.approaches`]}</p>
+                        )}
+                      </>
                     )}
                   </TableCell>
                   <TableCell>
                     {isReadOnly ? (
                       <p className="p-2 bg-gray-50 rounded min-h-[40px]">{assessment.improvements || '-'}</p>
                     ) : (
-                      <Textarea 
-                        value={assessment.improvements}
-                        onChange={(e) => handleAssessmentChange(index, 'improvements', e.target.value)}
-                        placeholder="Enter improvement possibilities..."
-                        className="min-h-[80px]"
-                      />
+                      <>
+                        <Textarea 
+                          value={assessment.improvements}
+                          onChange={(e) => handleAssessmentChange(index, 'improvements', e.target.value)}
+                          placeholder="Enter improvement possibilities..."
+                          className="min-h-[80px]"
+                        />
+                        {errors[`selfAssessments.${index}.improvements`] && (
+                          <p className="text-xs text-red-500">{errors[`selfAssessments.${index}.improvements`]}</p>
+                        )}
+                      </>
                     )}
                   </TableCell>
                   <TableCell>
                     {isReadOnly ? (
                       <p className="p-2 bg-gray-50 rounded min-h-[40px]">{assessment.timeFrame || '-'}</p>
                     ) : (
-                      <Input 
-                        value={assessment.timeFrame}
-                        onChange={(e) => handleAssessmentChange(index, 'timeFrame', e.target.value)}
-                        placeholder="Enter time frame..."
-                      />
+                      <>
+                        <Input 
+                          value={assessment.timeFrame}
+                          onChange={(e) => handleAssessmentChange(index, 'timeFrame', e.target.value)}
+                          placeholder="Enter time frame..."
+                        />
+                        {errors[`selfAssessments.${index}.timeFrame`] && (
+                          <p className="text-xs text-red-500">{errors[`selfAssessments.${index}.timeFrame`]}</p>
+                        )}
+                      </>
                     )}
                   </TableCell>
                   {!isReadOnly && (
@@ -405,15 +488,6 @@ export default function EmployeeSelfAppraisalModal({
             </TableBody>
           </Table>
         </div>
-
-        {/* Show a message when form is not yet submitted */}
-        {/* {!isSubmitted && !isReadOnly && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-blue-800 text-sm">
-              <strong>Note:</strong> Performance Factors, Individual Development Plan, and Additional Remarks sections will be available after you submit the form.
-            </p>
-          </div>
-        )} */}
 
         {/* 2. Performance Factors - Only show if submitted or read-only */}
         {(isSubmitted || isReadOnly) && (
@@ -438,38 +512,53 @@ export default function EmployeeSelfAppraisalModal({
                       {isReadOnly ? (
                         <p className="p-2 bg-gray-50 rounded min-h-[40px]">{factor.strengths || '-'}</p>
                       ) : (
-                        <Textarea 
-                          value={factor.strengths}
-                          onChange={(e) => handlePerformanceFactorChange(index, 'strengths', e.target.value)}
-                          placeholder="Enter strengths..."
-                          className="min-h-[80px]"
-                        />
+                        <>
+                          <Textarea 
+                            value={factor.strengths}
+                            onChange={(e) => handlePerformanceFactorChange(index, 'strengths', e.target.value)}
+                            placeholder="Enter strengths..."
+                            className="min-h-[80px]"
+                          />
+                          {errors[`performanceFactors.${index}.strengths`] && (
+                            <p className="text-xs text-red-500">{errors[`performanceFactors.${index}.strengths`]}</p>
+                          )}
+                        </>
                       )}
                     </TableCell>
                     <TableCell>
                       {isReadOnly ? (
                         <p className="p-2 bg-gray-50 rounded min-h-[40px]">{factor.improvementNeeds || '-'}</p>
                       ) : (
-                        <Textarea 
-                          value={factor.improvementNeeds}
-                          onChange={(e) => handlePerformanceFactorChange(index, 'improvementNeeds', e.target.value)}
-                          placeholder="Enter improvement needs..."
-                          className="min-h-[80px]"
-                        />
+                        <>
+                          <Textarea 
+                            value={factor.improvementNeeds}
+                            onChange={(e) => handlePerformanceFactorChange(index, 'improvementNeeds', e.target.value)}
+                            placeholder="Enter improvement needs..."
+                            className="min-h-[80px]"
+                          />
+                          {errors[`performanceFactors.${index}.improvementNeeds`] && (
+                            <p className="text-xs text-red-500">{errors[`performanceFactors.${index}.improvementNeeds`]}</p>
+                          )}
+                        </>
                       )}
                     </TableCell>
                     <TableCell>
                       {isReadOnly ? (
                         <p className="p-2 bg-gray-50 rounded min-h-[40px]">{factor.rating || '-'}</p>
                       ) : (
-                        <Input 
-                          type="number" 
-                          min="1" 
-                          max="10" 
-                          value={factor.rating} 
-                          onChange={(e) => handlePerformanceFactorChange(index, 'rating', e.target.value)}
-                          placeholder="1-10"
-                        />
+                        <>
+                          <Input 
+                            type="number" 
+                            min="1" 
+                            max="10" 
+                            value={factor.rating} 
+                            onChange={(e) => handlePerformanceFactorChange(index, 'rating', e.target.value)}
+                            placeholder="1-10"
+                          />
+                          {errors[`performanceFactors.${index}.rating`] && (
+                            <p className="text-xs text-red-500">{errors[`performanceFactors.${index}.rating`]}</p>
+                          )}
+                        </>
                       )}
                     </TableCell>
                   </TableRow>
@@ -497,12 +586,17 @@ export default function EmployeeSelfAppraisalModal({
                     {isReadOnly ? (
                       <p className="p-2 bg-gray-50 rounded min-h-[40px]">{formData.individualDevelopmentPlan.technical || '-'}</p>
                     ) : (
-                      <Textarea 
-                        value={formData.individualDevelopmentPlan.technical}
-                        onChange={(e) => handleDevelopmentPlanChange('technical', e.target.value)}
-                        placeholder="Enter technical development plan..."
-                        className="min-h-[80px]"
-                      />
+                      <>
+                        <Textarea 
+                          value={formData.individualDevelopmentPlan.technical}
+                          onChange={(e) => handleDevelopmentPlanChange('technical', e.target.value)}
+                          placeholder="Enter technical development plan..."
+                          className="min-h-[80px]"
+                        />
+                        {errors['individualDevelopmentPlan.technical'] && (
+                          <p className="text-xs text-red-500">{errors['individualDevelopmentPlan.technical']}</p>
+                        )}
+                      </>
                     )}
                   </TableCell>
                 </TableRow>
@@ -512,12 +606,17 @@ export default function EmployeeSelfAppraisalModal({
                     {isReadOnly ? (
                       <p className="p-2 bg-gray-50 rounded min-h-[40px]">{formData.individualDevelopmentPlan.behavioral || '-'}</p>
                     ) : (
-                      <Textarea 
-                        value={formData.individualDevelopmentPlan.behavioral}
-                        onChange={(e) => handleDevelopmentPlanChange('behavioral', e.target.value)}
-                        placeholder="Enter behavioral development plan..."
-                        className="min-h-[80px]"
-                      />
+                      <>
+                        <Textarea 
+                          value={formData.individualDevelopmentPlan.behavioral}
+                          onChange={(e) => handleDevelopmentPlanChange('behavioral', e.target.value)}
+                          placeholder="Enter behavioral development plan..."
+                          className="min-h-[80px]"
+                        />
+                        {errors['individualDevelopmentPlan.behavioral'] && (
+                          <p className="text-xs text-red-500">{errors['individualDevelopmentPlan.behavioral']}</p>
+                        )}
+                      </>
                     )}
                   </TableCell>
                 </TableRow>
@@ -527,12 +626,17 @@ export default function EmployeeSelfAppraisalModal({
                     {isReadOnly ? (
                       <p className="p-2 bg-gray-50 rounded min-h-[40px]">{formData.individualDevelopmentPlan.functional || '-'}</p>
                     ) : (
-                      <Textarea 
-                        value={formData.individualDevelopmentPlan.functional}
-                        onChange={(e) => handleDevelopmentPlanChange('functional', e.target.value)}
-                        placeholder="Enter functional development plan..."
-                        className="min-h-[80px]"
-                      />
+                      <>
+                        <Textarea 
+                          value={formData.individualDevelopmentPlan.functional}
+                          onChange={(e) => handleDevelopmentPlanChange('functional', e.target.value)}
+                          placeholder="Enter functional development plan..."
+                          className="min-h-[80px]"
+                        />
+                        {errors['individualDevelopmentPlan.functional'] && (
+                          <p className="text-xs text-red-500">{errors['individualDevelopmentPlan.functional']}</p>
+                        )}
+                      </>
                     )}
                   </TableCell>
                 </TableRow>
@@ -566,7 +670,6 @@ export default function EmployeeSelfAppraisalModal({
         {!isReadOnly && (
           <div className="flex justify-end gap-2 pt-4 border-t">
             {!isSubmitted ? (
-              // Before submission: Show Save Draft and Submit buttons
               <>
                 <Button 
                   variant="outline" 
@@ -583,7 +686,6 @@ export default function EmployeeSelfAppraisalModal({
                 </Button>
               </>
             ) : (
-              // After submission: Show Update button
               <Button 
                 onClick={() => handleSubmitForm('submit')}
                 type="button"
