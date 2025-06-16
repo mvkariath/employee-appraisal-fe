@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import EmployeeSelfAppraisalModal from "../components/EmployeeSelfAppraisalModal";
-
+import { GeminiAppraisalSummaryChat } from "../components/SummaryGenerator";
 // Mock data - same as your original
 const initialAppraisals = [
   {
@@ -496,13 +496,16 @@ export default function AppraisalsPage() {
                     </div>
                   </div>
 
-                  {appraisal.additionalRemarks && (
+                  {/* {appraisal.additionalRemarks && (
                     <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                       <p className="text-sm text-gray-500 mb-2">
                         Additional Remarks
                       </p>
                       <p className="text-gray-700">{appraisal.additionalRemarks}</p>
                     </div>
+                  )} */}
+                  {appraisal.selfAppraisal && (
+                    <GeminiAppraisalSummaryChat appraisalData={appraisal} />
                   )}
                 </CardContent>
               </Card>
