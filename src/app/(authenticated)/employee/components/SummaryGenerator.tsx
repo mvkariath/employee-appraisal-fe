@@ -8,7 +8,7 @@ export function GeminiAppraisalSummaryChat({ appraisalData }: { appraisalData: a
   const handleSummarize = async () => {
     setLoading(true);
     setSummary(null);
-    const res = await fetch("http://localhost:5000/api/gemini-summary", {
+    const res = await fetch("http://localhost:3000/api/gemini-summary/summary", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ appraisalData })
