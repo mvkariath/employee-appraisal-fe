@@ -43,9 +43,36 @@ export function LoginForm() {
       // if (result?.error) {
       //   throw new Error(result.error);
       // }
-      if (values.email === values.password) {
-        router.push("/dashboard");
+
+    //  ##########
+    //  routing based on role
+    //  ##########
+
+      const dummyAccessToken = {
+        id: 1,
+        email: "hr@example.com",
+        name: "HR Manager",
+        role: "hr",
+        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJociFAZXhhbXBsZS5jb20iLCJuYW1lIjoiSFIgTWFuYWdlciIsInJvbGUiOiJociIsImlhdCI6MTY5ODAwMDAwMCwiZXhwIjoxNjk4MDAzNjAwfQ.WgEqhcOlo9CnPmlcVbIbnfnzV02V5cGzDDfVdn1oVxY"
       }
+
+
+      const role =dummyAccessToken?.role; // adjust depending on your session shape
+
+      if (role === "hr") {
+        router.push("/hr/dashboard");
+      } else if (role === "lead") {
+        router.push("/leads/dashboard");
+      } else if (role === "employee") {
+        router.push("/employee/dashboard");
+      } else {
+        toast.error("Invalid role");
+      }
+
+
+      // if (values.email === values.password) {
+      //   router.push("/dashboard");
+      // }
     } catch (error) {
       toast("login failed");
     }
