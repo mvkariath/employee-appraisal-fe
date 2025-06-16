@@ -237,8 +237,18 @@ const Index = () => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
           <div className="flex justify-between items-center p-6 border-b">
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-xl font-semibold flex items-center gap-3 text-gray-900">
               Individual Development Plan - {currentIdpEmployee.name}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setIsViewForm(true);
+                }}
+              >
+                <FileText className="h-4 w-4 mr-1" />
+                View Form
+              </Button>
             </h2>
             <button
               onClick={() => setIsIdpModalOpen(false)}
