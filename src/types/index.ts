@@ -11,6 +11,16 @@ export interface Employee {
   teamLeads: string[];
 }
 
+export interface EmployeeAppraisal{
+  
+    employeeId: string
+    employeeName: string
+    dueDate: string
+    progress: number
+    status: "pending" | "in_progress" | "completed"
+  
+}
+
 export interface SelfAppraisalEntry {
   id: string;
   deliveryDetails: string;

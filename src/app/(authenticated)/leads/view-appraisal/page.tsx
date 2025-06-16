@@ -10,8 +10,10 @@ import { Progress } from "@/components/ui/progress"
 import { LayoutGrid, List } from "lucide-react"
 import clsx from "clsx"
 import { useRouter } from "next/navigation"
+import { EmployeeAppraisalsTable } from "@/components/leads/EmployeeAppraisalsTable"
+import { EmployeeAppraisal } from "@/types"
 
-const mockAppraisals = [
+const mockAppraisals:EmployeeAppraisal[] = [
   { employeeId: "1", employeeName: "Alice Johnson", dueDate: "2025-07-01", progress: 80, status: "completed" },
   { employeeId: "2", employeeName: "Bob Smith", dueDate: "2025-07-10", progress: 50, status: "in_progress" },
   { employeeId: "3", employeeName: "Carol Lee", dueDate: "2025-07-15", progress: 0, status: "pending" },
@@ -56,49 +58,7 @@ export default function AppraisalsPage() {
           ))}
         </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Employee</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Progress</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mockAppraisals.map((appraisal) => (
-              <TableRow key={appraisal.employeeId}>
-                <TableCell>{appraisal.employeeName}</TableCell>
-                <TableCell>{appraisal.dueDate}</TableCell>
-                <TableCell>
-                  <Badge variant={
-                    appraisal.status === "completed"
-                      ? "success"
-                      : appraisal.status === "in_progress"
-                        ? "secondary"
-                        : "outline"
-                  }>
-                    {appraisal.status.replace("_", " ")}
-                  </Badge>
-                </TableCell>
-                <TableCell className="w-[200px]">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>{appraisal.progress}%</span>
-                    </div>
-                    <Progress value={appraisal.progress} />
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Button size="sm" onClick={() => handleViewAppraisal(appraisal.employeeId)}>
-                    View
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <EmployeeAppraisalsTable mockAppraisals={mockAppraisals} />
       )}
     </div>
   )
