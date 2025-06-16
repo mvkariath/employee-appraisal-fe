@@ -42,6 +42,8 @@ const Index = () => {
   const [isIdpModalOpen, setIsIdpModalOpen] = useState(false);
   const [currentIdpEmployee, setCurrentIdpEmployee] = useState(null);
   const [showConfirmClose, setShowConfirmClose] = useState(false);
+  const [showConfirmPushToLead, setShowConfirmPushToLead] = useState(false);
+  const [currentPushEmployee, setCurrentPushEmployee] = useState(null);
 
   const [employees, setEmployees] = useState([
     {
@@ -137,7 +139,36 @@ const Index = () => {
   };
 
   const handlePushToLead = (employee) => {
-    console.log(`Pushing ${employee.name} to lead: ${employee.lead}`);
+    setCurrentPushEmployee(employee);
+    setShowConfirmPushToLead(true);
+  };
+
+  const confirmPushToLead = () => {
+    if (currentPushEmployee) {
+      console.log(
+        `Pushing ${currentPushEmployee.name} to lead: ${currentPushEmployee.lead}`
+      );
+      // Update employee status and stage after pushing to lead
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          emp.id === currentPushEmployee.id
+            ? {
+                ...emp,
+                stage: "Final Review",
+                progress: 80,
+                status: "Meeting Scheduled",
+              }
+            : emp
+        )
+      );
+    }
+    setShowConfirmPushToLead(false);
+    setCurrentPushEmployee(null);
+  };
+
+  const cancelPushToLead = () => {
+    setShowConfirmPushToLead(false);
+    setCurrentPushEmployee(null);
   };
 
   const handleConductMeeting = (employee) => {
@@ -166,6 +197,37 @@ const Index = () => {
 
   const cancelCloseMeeting = () => {
     setShowConfirmClose(false);
+  };
+
+  const PushToLeadConfirmModal = () => {
+    if (!showConfirmPushToLead || !currentPushEmployee) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Confirm Push to Lead
+          </h3>
+          <p className="text-gray-600 mb-6">
+            Are you sure you want to push {currentPushEmployee.name}'s review to
+            their lead{" "}
+            <span className="font-semibold">{currentPushEmployee.lead}</span>?
+            This will advance their review to the next stage.
+          </p>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={cancelPushToLead}>
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmPushToLead}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Yes, Push to Lead
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const IdpModal = () => {
@@ -471,6 +533,7 @@ const Index = () => {
         {displayMode === "card" ? renderCardView() : renderTableView()}
       </div>
       <IdpModal />
+      <PushToLeadConfirmModal />
     </div>
   );
 
