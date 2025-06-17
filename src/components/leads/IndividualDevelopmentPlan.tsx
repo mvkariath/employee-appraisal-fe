@@ -15,13 +15,19 @@ type PlanRow = {
   developmentPlan: string[]
 }
 
+type IndividualDevelopmentPlanProps = {
+  readOnly?: boolean;
+  //initialRows?: PlanRow[];
+
+};
+
 const initialData: PlanRow[] = [
   { type: "Technical", individualObjective: "", developmentPlan: [""] },
   { type: "Behavioural", individualObjective: "", developmentPlan: [""] },
   { type: "Functional", individualObjective: "", developmentPlan: [""] },
 ]
 
-export default function IndividualDevelopmentPlan() {
+export default function IndividualDevelopmentPlan({readOnly}: IndividualDevelopmentPlanProps) {
   const [rows, setRows] = useState<PlanRow[]>(initialData)
 
   const handleObjectiveChange = (index: number, value: string) => {

@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-
 const TeamLeadDashboard = () => {
   // Mock data - replace with actual data from your API
   const teamName = "Software Engineers";
@@ -94,7 +93,7 @@ const TeamLeadDashboard = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="flex flex-col gap-6 rounded-xl border py-6 shadow-sm bg-gradient-to-r from-green-500 to-green-600 text-white">
+          <Card className="flex flex-col gap-6 rounded-xl border py-6 shadow-sm bg-gradient-to-r from-purple-500 to-purple-600 text-white">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">
                 Total Appraisals
@@ -106,7 +105,7 @@ const TeamLeadDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="flex flex-col gap-6 rounded-xl border py-6 shadow-sm bg-gradient-to-r from-red-500 to-red-600 text-white">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">
                 Pending Appraisals
@@ -117,7 +116,8 @@ const TeamLeadDashboard = () => {
               <div className="text-2xl font-bold">{pendingAppraisalsCount}</div>
             </CardContent>
           </Card>
-          <Card>
+
+          <Card className="flex flex-col gap-6 rounded-xl border py-6 shadow-sm bg-gradient-to-r from-green-500 to-green-600 text-white">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">
                 Completed Appraisals
@@ -132,11 +132,29 @@ const TeamLeadDashboard = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            {/* Past Appraisals */}
+            {/* Pending Appraisals */}
             <div className="mb-8">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Past Appraisals</h2>
-                <Button variant="link" className="text-sm" /*onClick={() => navigate("/past-appraisals")}*/>
+                <h2 className="text-xl font-semibold">Pending Appraisals</h2>
+                <Button variant="link" className="text-sm">
+                  View All
+                </Button>
+              </div>
+              <div className="space-y-4">
+                {pendingAppraisals.map((appraisal) => (
+                  <EmployeeAppraisalCard
+                    key={appraisal.employeeId}
+                    appraisal={appraisal}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Completed Appraisals */}
+            <div className="mb-8">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Completed Appraisals</h2>
+                <Button variant="link" className="text-sm">
                   View All
                 </Button>
               </div>
@@ -165,24 +183,6 @@ const TeamLeadDashboard = () => {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
-            </div>
-
-            {/* Pending Appraisals */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Pending Appraisals</h2>
-                <Button variant="link" className="text-sm">
-                  View All
-                </Button>
-              </div>
-              <div className="space-y-4">
-                {pendingAppraisals.map((appraisal) => (
-                  <EmployeeAppraisalCard
-                    key={appraisal.employeeId}
-                    appraisal={appraisal}
-                  />
                 ))}
               </div>
             </div>
