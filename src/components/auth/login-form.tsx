@@ -44,7 +44,7 @@ export function LoginForm() {
           router.push("/hr/dashboard");
         }
         if(response.data.accessToken.role === 'LEAD'){
-          router.push("/hr/dashboard");
+          router.push("/leads/dashboard");
 
         }
         if(response.data.accessToken.role === 'DEVELOPER'){

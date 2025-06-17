@@ -21,6 +21,8 @@ import { CalendarIcon, Save, X } from "lucide-react";
 import { format, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useGetEmployeesQuery } from "@/api-service/employees/employee.api";
+import { useCreateCycleMutation } from "@/api-service/appraisalCycle/appraisalCycle.api";
 
 interface Employee {
   id: number;
@@ -28,6 +30,9 @@ interface Employee {
   department: string;
   role: string;
 }
+
+const token = localStorage.getItem("token")
+const useDetails = token?JSON.parse(token):null
 
 interface AppraisalCycleModalProps {
   open: boolean;
@@ -47,109 +52,18 @@ const AppraisalCycleModal = ({
 
   const today = startOfDay(new Date());
 
-  
-  // Mock employee data - replace with actual data source
-  const employees: Employee[] = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      department: "Engineering",
-      role: "Senior Developer",
-    },
-    {
-      id: 2,
-      name: "David Rodriguez",
-      department: "Marketing",
-      role: "Marketing Specialist",
-    },
-    { id: 3, name: "Emily Chen", department: "Design", role: "UX Designer" },
-    {
-      id: 4,
-      name: "Michael Brown",
-      department: "Engineering",
-      role: "Frontend Developer",
-    },
-    { id: 5, name: "Lisa Park", department: "HR", role: "HR Manager" },
-    { id: 6, name: "John Smith", department: "Sales", role: "Sales Manager" },
-    {
-      id: 7,
-      name: "Anna Williams",
-      department: "Finance",
-      role: "Financial Analyst",
-    },
-    {
-      id: 8,
-      name: "Robert Wilson",
-      department: "Engineering",
-      role: "Backend Developer",
-    },
-    {
-      id: 9,
-      name: "Jessica Davis",
-      department: "Marketing",
-      role: "Content Manager",
-    },
-    {
-      id: 10,
-      name: "Christopher Lee",
-      department: "Design",
-      role: "Product Designer",
-    },
-    {
-      id: 11,
-      name: "Amanda Taylor",
-      department: "Operations",
-      role: "Operations Manager",
-    },
-    {
-      id: 12,
-      name: "James Anderson",
-      department: "Engineering",
-      role: "DevOps Engineer",
-    },
-    {
-      id: 13,
-      name: "Nicole Martin",
-      department: "Sales",
-      role: "Sales Representative",
-    },
-    {
-      id: 14,
-      name: "Kevin Thompson",
-      department: "Finance",
-      role: "Accountant",
-    },
-    { id: 15, name: "Rachel Garcia", department: "HR", role: "Recruiter" },
-    {
-      id: 16,
-      name: "Daniel Martinez",
-      department: "Engineering",
-      role: "QA Engineer",
-    },
-    {
-      id: 17,
-      name: "Michelle Robinson",
-      department: "Marketing",
-      role: "Social Media Manager",
-    },
-    { id: 18, name: "Brian Clark", department: "Design", role: "UI Designer" },
-    {
-      id: 19,
-      name: "Stephanie Lewis",
-      department: "Operations",
-      role: "Project Manager",
-    },
-    {
-      id: 20,
-      name: "Mark Walker",
-      department: "Sales",
-      role: "Account Manager",
-    },
-  ];
+
+  const { data, isLoading } = useGetEmployeesQuery();
+  const [createCycle] = useCreateCycleMutation();
+
+
+  const employees: Employee[] = data ?? [];
+
+
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredEmployees = employees.filter((emp) =>
+  const filteredEmployees = employees?.filter((emp) =>
     emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     emp.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
     emp.department.toLowerCase().includes(searchQuery.toLowerCase())
@@ -190,24 +104,23 @@ const AppraisalCycleModal = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = () => {
-    if (!validateForm()) {
-      toast("Please fix the highlighted errors.");
-      return;
-    }
+ const handleSave = async () => {
+  if (!validateForm()) {
+    toast("Please fix the highlighted errors.");
+    return;
+  }
 
-    const cycleData = {
-      name: cycleName,
-      startDate,
-      endDate,
-      selectedEmployees: selectedEmployees.map((id) =>
-        employees.find((emp) => emp.id === id)
-      ),
-      status: "Planning",
-    };
+  const payload = {
+    name: cycleName,
+    start_date: startDate,
+    end_date: endDate,
+    status: "INITIATED",
+    created_by: useDetails.id,
+    employees: selectedEmployees, // array of employee IDs
+  };
 
-    onSave?.(cycleData);
-
+  try {
+    await createCycle(payload).unwrap();
     toast("Appraisal cycle created successfully!");
 
     // Reset form
@@ -217,7 +130,12 @@ const AppraisalCycleModal = ({
     setSelectedEmployees([]);
     setErrors({});
     onOpenChange(false);
-  };
+  } catch (error) {
+    console.error("Error creating cycle:", error);
+    toast("Failed to create appraisal cycle.");
+  }
+};
+
 
   const handleClose = () => {
     setCycleName("");
@@ -340,81 +258,81 @@ const AppraisalCycleModal = ({
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <Label>
-                Select Employees ({selectedEmployees.length}/{employees.length})
+                Select Employees ({selectedEmployees.length}/{employees?.length})
               </Label>
               <Button variant="ghost" onClick={handleSelectAll}>
-                {selectedEmployees.length === employees.length
+                {selectedEmployees.length === employees?.length
                   ? "Deselect All"
                   : "Select All"}
               </Button>
             </div>
 
-             {/* Pills for selected employees */}
-      {selectedEmployees.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {selectedEmployees.map((id) => {
-            const emp = employees.find((e) => e.id === id);
-            if (!emp) return null;
-            return (
-              <div
-                key={emp.id}
-                className="flex items-center bg-gray-200 text-gray-800 rounded-full px-3 py-1 text-sm font-medium"
-              >
-                {emp.name}
-                <button
-                  onClick={() => handleEmployeeToggle(emp.id)}
-                  className="ml-2 hover:text-red-500"
-                  aria-label={`Remove ${emp.name}`}
-                >
-                  <X className="w-4 h-4" />
-                </button>
+            {/* Pills for selected employees */}
+            {selectedEmployees.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {selectedEmployees.map((id) => {
+                  const emp = employees?.find((e) => e.id === id);
+                  if (!emp) return null;
+                  return (
+                    <div
+                      key={emp.id}
+                      className="flex items-center bg-gray-200 text-gray-800 rounded-full px-3 py-1 text-sm font-medium"
+                    >
+                      {emp.name}
+                      <button
+                        onClick={() => handleEmployeeToggle(emp.id)}
+                        className="ml-2 hover:text-red-500"
+                        aria-label={`Remove ${emp.name}`}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-      )}
+            )}
 
-      {/* Search box */}
-      <Input
-        placeholder="Search by name, role, or department"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full"
-      />
+            {/* Search box */}
+            <Input
+              placeholder="Search by name, role, or department"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full"
+            />
 
-      {/* Employee list */}
-      <div className="border rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-        <div className="grid grid-cols-1 gap-3">
-          {filteredEmployees.length > 0 ? (
-            filteredEmployees.map((employee) => (
-              <div
-                key={employee.id}
-                className="flex items-start space-x-3 p-2 hover:bg-gray-100 rounded-md transition"
-              >
-                <Checkbox
-                  id={`employee-${employee.id}`}
-                  checked={selectedEmployees.includes(employee.id)}
-                  onCheckedChange={() => handleEmployeeToggle(employee.id)}
-                />
-                <div className="flex-1">
-                  <label
-                    htmlFor={`employee-${employee.id}`}
-                    className="text-sm font-medium text-gray-800 cursor-pointer"
-                  >
-                    {employee.name}
-                  </label>
-                  <p className="text-xs text-gray-500">
-                    {employee.role} • {employee.department}
-                  </p>
-                </div>
+            {/* Employee list */}
+            <div className="border rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+              <div className="grid grid-cols-1 gap-3">
+                {filteredEmployees.length > 0 ? (
+                  filteredEmployees?.map((employee) => (
+                    <div
+                      key={employee.id}
+                      className="flex items-start space-x-3 p-2 hover:bg-gray-100 rounded-md transition"
+                    >
+                      <Checkbox
+                        id={`employee-${employee.id}`}
+                        checked={selectedEmployees.includes(employee.id)}
+                        onCheckedChange={() => handleEmployeeToggle(employee.id)}
+                      />
+                      <div className="flex-1">
+                        <label
+                          htmlFor={`employee-${employee.id}`}
+                          className="text-sm font-medium text-gray-800 cursor-pointer"
+                        >
+                          {employee.name}
+                        </label>
+                        <p className="text-xs text-gray-500">
+                          {employee.role} • {employee.department}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">No employees found.</p>
+                )}
               </div>
-            ))
-          ) : (
-            <p className="text-sm text-gray-500">No employees found.</p>
-          )}
-        </div>
-      </div>
-    
+            </div>
+
           </div>
         </div>
 
