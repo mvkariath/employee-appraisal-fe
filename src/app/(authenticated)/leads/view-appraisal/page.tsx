@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { LayoutGrid, List } from "lucide-react"
+import { Grid, LayoutGrid, List ,TableIcon} from "lucide-react"
 import clsx from "clsx"
 import { useRouter } from "next/navigation"
 import { EmployeeAppraisalsTable } from "@/components/leads/EmployeeAppraisalsTable"
@@ -21,7 +21,7 @@ const mockAppraisals:EmployeeAppraisal[] = [
 ]
 
 export default function AppraisalsPage() {
-  const [view, setView] = useState<"grid" | "table">("grid")
+  const [view, setView] = useState<"card" | "table">("card")
   const router = useRouter()
 
   const handleViewAppraisal = (employeeId: string) => {
@@ -29,29 +29,35 @@ export default function AppraisalsPage() {
   }
 
   return (
+   
     <div className="container mx-auto py-8 px-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Employee Appraisals</h1>
-        <div className="flex gap-2">
-          <Toggle
-            pressed={view === "grid"}
-            onPressedChange={() => setView("grid")}
-            aria-label="Grid view"
-          >
-            <LayoutGrid className="h-5 w-5" />
-          </Toggle>
-          <Toggle
-            pressed={view === "table"}
-            onPressedChange={() => setView("table")}
-            aria-label="Table view"
-          >
-            <List className="h-5 w-5" />
-          </Toggle>
+      
+          
+          <div className="flex gap-2 ">
+            <Button
+              variant={view=== "card" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setView("card")}
+            >
+              <Grid className="h-4 w-4 mr-2" />
+              Card View
+            </Button>
+            <Button
+              variant={view=== "table" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setView("table")}
+            >
+              <TableIcon className="h-4 w-4 mr-2" />
+              Table View
+            </Button>
+          </div>
         </div>
-      </div>
+      
 
-      {/* Render view */}
-      {view === "grid" ? (
+    
+      {view === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {mockAppraisals.map((appraisal) => (
             <EmployeeAppraisalCard key={appraisal.employeeId} appraisal={appraisal} />
@@ -60,6 +66,7 @@ export default function AppraisalsPage() {
       ) : (
         <EmployeeAppraisalsTable mockAppraisals={mockAppraisals} />
       )}
-    </div>
+      </div>
+   
   )
 }

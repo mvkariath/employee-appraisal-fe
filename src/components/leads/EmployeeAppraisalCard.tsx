@@ -1,3 +1,4 @@
+"use client"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
@@ -12,7 +13,7 @@ export interface EmployeeAppraisalCardProps {
     progress: number
     status: "pending" | "in_progress" | "completed"
   }
-}
+} 
 
 export const EmployeeAppraisalCard = ({ appraisal }: EmployeeAppraisalCardProps) => {
   const router = useRouter()

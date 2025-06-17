@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {EmployeeAppraisal } from "@/types/index"; // Adjust the import path as necessary
-
+import { useRouter } from "next/navigation";
+import { use } from "react";
 
 
 
@@ -16,7 +17,10 @@ const statusColor = {
 } as const;
 
 export const EmployeeAppraisalsTable = ({ mockAppraisals}  :{ mockAppraisals:EmployeeAppraisal[]}) => {
- 
+  const router=useRouter();
+   const handleViewAppraisal = (employeeId:number) => {
+    router.push(`/leads/appraisal/${employeeId}`)
+  }
 
   return (
    <Table>
