@@ -34,7 +34,6 @@ interface AppraisalCycleModalProps {
   onOpenChange: (open: boolean) => void;
   onSave?: (cycleData: any) => void;
 }
-
 const AppraisalCycleModal = ({
   open,
   onOpenChange,
@@ -48,6 +47,8 @@ const AppraisalCycleModal = ({
 
   const today = startOfDay(new Date());
 
+  
+  // Mock employee data - replace with actual data source
   const employees: Employee[] = [
     {
       id: 1,
@@ -146,6 +147,14 @@ const AppraisalCycleModal = ({
     },
   ];
 
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredEmployees = employees.filter((emp) =>
+    emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    emp.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    emp.department.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const handleEmployeeToggle = (employeeId: number) => {
     setSelectedEmployees((prev) =>
       prev.includes(employeeId)
@@ -198,8 +207,10 @@ const AppraisalCycleModal = ({
     };
 
     onSave?.(cycleData);
+
     toast("Appraisal cycle created successfully!");
 
+    // Reset form
     setCycleName("");
     setStartDate(undefined);
     setEndDate(undefined);
@@ -272,13 +283,14 @@ const AppraisalCycleModal = ({
                 </PopoverTrigger>
                 <PopoverContent align="start">
                   <Calendar
+                    mode="single"
                     selected={startDate}
                     onSelect={(date) => {
                       setStartDate(date);
                       setErrors((prev) => ({ ...prev, startDate: "" }));
                     }}
-                    mode="single"
                     initialFocus
+                    className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
@@ -304,7 +316,7 @@ const AppraisalCycleModal = ({
                     {endDate ? format(endDate, "PPP") : "Pick end date"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="start">
+                <PopoverContent className="w-auto p-0 mt-2 border shadow-lg" align="start">
                   <Calendar
                     selected={endDate}
                     onSelect={(date) => {
@@ -313,6 +325,7 @@ const AppraisalCycleModal = ({
                     }}
                     mode="single"
                     initialFocus
+                    className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
@@ -323,6 +336,7 @@ const AppraisalCycleModal = ({
           </div>
 
           {/* Employee Selection */}
+
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <Label>
@@ -334,35 +348,73 @@ const AppraisalCycleModal = ({
                   : "Select All"}
               </Button>
             </div>
-            {errors.employees && (
-              <p className="text-sm text-red-500 mt-1">{errors.employees}</p>
-            )}
 
-            <div className="border rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-              {employees.map((employee) => (
-                <div
-                  key={employee.id}
-                  className="flex items-start gap-3 p-2 hover:bg-gray-100 rounded-md"
+             {/* Pills for selected employees */}
+      {selectedEmployees.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedEmployees.map((id) => {
+            const emp = employees.find((e) => e.id === id);
+            if (!emp) return null;
+            return (
+              <div
+                key={emp.id}
+                className="flex items-center bg-gray-200 text-gray-800 rounded-full px-3 py-1 text-sm font-medium"
+              >
+                {emp.name}
+                <button
+                  onClick={() => handleEmployeeToggle(emp.id)}
+                  className="ml-2 hover:text-red-500"
+                  aria-label={`Remove ${emp.name}`}
                 >
-                  <Checkbox
-                    id={`employee-${employee.id}`}
-                    checked={selectedEmployees.includes(employee.id)}
-                    onCheckedChange={() => handleEmployeeToggle(employee.id)}
-                  />
-                  <div className="flex-1">
-                    <label
-                      htmlFor={`employee-${employee.id}`}
-                      className="text-sm font-medium text-gray-800 cursor-pointer"
-                    >
-                      {employee.name}
-                    </label>
-                    <p className="text-xs text-gray-500">
-                      {employee.role} • {employee.department}
-                    </p>
-                  </div>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Search box */}
+      <Input
+        placeholder="Search by name, role, or department"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full"
+      />
+
+      {/* Employee list */}
+      <div className="border rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+        <div className="grid grid-cols-1 gap-3">
+          {filteredEmployees.length > 0 ? (
+            filteredEmployees.map((employee) => (
+              <div
+                key={employee.id}
+                className="flex items-start space-x-3 p-2 hover:bg-gray-100 rounded-md transition"
+              >
+                <Checkbox
+                  id={`employee-${employee.id}`}
+                  checked={selectedEmployees.includes(employee.id)}
+                  onCheckedChange={() => handleEmployeeToggle(employee.id)}
+                />
+                <div className="flex-1">
+                  <label
+                    htmlFor={`employee-${employee.id}`}
+                    className="text-sm font-medium text-gray-800 cursor-pointer"
+                  >
+                    {employee.name}
+                  </label>
+                  <p className="text-xs text-gray-500">
+                    {employee.role} • {employee.department}
+                  </p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-gray-500">No employees found.</p>
+          )}
+        </div>
+      </div>
+    
           </div>
         </div>
 
@@ -379,6 +431,7 @@ const AppraisalCycleModal = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
   );
 };
 
