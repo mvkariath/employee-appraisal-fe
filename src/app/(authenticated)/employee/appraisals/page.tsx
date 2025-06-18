@@ -20,6 +20,7 @@ import { useGetEmployeeByIdQuery } from "@/api-service/employees/employee.api";
 import { useGetAppraisalByEmployeeIdQuery } from "@/api-service/appraisal/appraisal.api";
 import { useUpdateAppraisalMutation } from "@/api-service/appraisal/appraisal.api";
 import { skipToken } from "@reduxjs/toolkit/query";
+import ChatBot from "../components/chatbot";
 // Mock data - same as your original
 function HRName({ id }: { id: number }) {
   const { data, isLoading } = useGetEmployeeByIdQuery({ id });

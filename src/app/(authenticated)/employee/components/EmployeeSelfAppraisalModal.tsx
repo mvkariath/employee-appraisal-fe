@@ -22,7 +22,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, X } from "lucide-react";
-
+import ChatBot from "./chatbot";
+import { MessageCircle } from "lucide-react";
+import ChatBotLauncher from "./chatbotlauncher";
 interface EmployeeData {
   name: string;
   designation: string;
@@ -140,7 +142,7 @@ export default function EmployeeSelfAppraisalModal({
 }: EmployeeSelfAppraisalModalProps) {
   const [formData, setFormData] = useState<FormData>({ ...defaultFormData });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
+  const [showChat, setShowChat] = useState(false);
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
@@ -358,6 +360,7 @@ export default function EmployeeSelfAppraisalModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="!max-w-none !w-[90vw] !h-[90vh] overflow-y-auto">
+        {/* <ChatBotLauncher/> */}
         <DialogHeader>
           <DialogTitle>
             {isReadOnly
@@ -892,7 +895,7 @@ export default function EmployeeSelfAppraisalModal({
         )}
 
         {!isReadOnly && (
-          <div className="flex justify-end gap-2 pt-4 border-t">
+          <div className="flex justify-end gap-2 pt-4 border-t mr-24">
             {!isSubmitted ? (
               <>
                 <Button
@@ -916,7 +919,37 @@ export default function EmployeeSelfAppraisalModal({
             )}
           </div>
         )}
+        <div>
+        {/* Floating Chatbot Button */}
+        {!showChat && (
+          <Button
+            className="fixed bottom-10 right-10 z-50 rounded-full shadow-lg h-12 w-12 p-0 flex items-center justify-center"
+            onClick={() => setShowChat(true)}
+            variant="secondary"
+            style={{ borderRadius: "50%" }}
+            aria-label="Open Chatbot"
+          >
+            <MessageCircle className="h-6 w-6" />
+          </Button>
+        )}
+
+        {/* Chatbot Panel inside Modal */}
+        {showChat && (
+          <div className="fixed bottom-24 right-10 z-50 w-80">
+            <ChatBot />
+            <Button
+              size="sm"
+              variant="ghost"
+              className="absolute top-2 right-2"
+              onClick={() => setShowChat(false)}
+            >
+              <X></X>
+            </Button>
+          </div>
+        )}
+      </div>
       </DialogContent>
+      
     </Dialog>
   );
 }
