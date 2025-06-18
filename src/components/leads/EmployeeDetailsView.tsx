@@ -1,13 +1,10 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Employee } from "@/types";
+import { Employee } from "@/api-service/employees/types";
 
-interface EmployeeDetailsViewProps {
-  employee: Employee;
-}
 
-export const EmployeeDetailsView = ({ employee }: EmployeeDetailsViewProps) => {
+export const EmployeeDetailsView = ({ employee }: {employee:Employee}) => {
   return (
     <Card>
       <CardHeader>
@@ -21,7 +18,7 @@ export const EmployeeDetailsView = ({ employee }: EmployeeDetailsViewProps) => {
           </div>
           <div>
             <p className="font-semibold">Designation</p>
-            <p>{employee.designation}</p>
+            <p>{employee.role}</p>
           </div>
           <div>
             <p className="font-semibold">Date of Joining</p>
@@ -29,16 +26,16 @@ export const EmployeeDetailsView = ({ employee }: EmployeeDetailsViewProps) => {
           </div>
           <div>
             <p className="font-semibold">Years of Experience</p>
-            <p>{employee.yearsOfExperience}</p>
+            <p>{employee.experience}</p>
           </div>
           <div>
             <p className="font-semibold">Team</p>
-            <p>{employee.team}</p>
+            <p>{employee.department}</p>
           </div>
-          <div>
+          {/* <div>
             <p className="font-semibold">Team Leads</p>
             <p>{employee.teamLeads.join(", ")}</p>
-          </div>
+          </div> */}
         </div>
       </CardContent>
     </Card>

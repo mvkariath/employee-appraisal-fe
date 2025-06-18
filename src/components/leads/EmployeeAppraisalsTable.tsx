@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {EmployeeAppraisal } from "@/types/index"; // Adjust the import path as necessary
 import { useRouter } from "next/navigation";
 import { use } from "react";
+import { EmployeeData } from "@/api-service/leads/types";
 
 
 
@@ -16,7 +17,7 @@ const statusColor = {
   "Completed": "default"
 } as const;
 
-export const EmployeeAppraisalsTable = ({ mockAppraisals}  :{ mockAppraisals:EmployeeAppraisal[]}) => {
+export const EmployeeAppraisalsTable = ({ appraisals}  :{ appraisals:EmployeeData[]|undefined}) => {
   const router=useRouter();
    const handleViewAppraisal = (employeeId:number) => {
     router.push(`/leads/appraisal/${employeeId}`)
@@ -34,12 +35,12 @@ export const EmployeeAppraisalsTable = ({ mockAppraisals}  :{ mockAppraisals:Emp
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockAppraisals.map((appraisal) => (
-              <TableRow key={appraisal.employeeId}>
-                <TableCell>{appraisal.employeeName}</TableCell>
-                <TableCell>{appraisal.dueDate}</TableCell>
+            {appraisals?.map((appraisal:EmployeeData) => (
+              <TableRow key={appraisal.name}>
+                <TableCell>{appraisal.department}</TableCell>
+                <TableCell>moment(appraisal.endDate).format('Do MM YYYY')</TableCell>
                 <TableCell>
-                  <Badge variant={
+                  {/* <Badge variant={
                     appraisal.status === "completed"
                       ? "success"
                       : appraisal.status === "in_progress"
@@ -47,18 +48,18 @@ export const EmployeeAppraisalsTable = ({ mockAppraisals}  :{ mockAppraisals:Emp
                         : "outline"
                   }>
                     {appraisal.status.replace("_", " ")}
-                  </Badge>
+                  </Badge> */}
                 </TableCell>
-                <TableCell className="w-[200px]">
+                {/* <TableCell className="w-[200px]">
                   <div className="flex flex-col gap-1">
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <span>{appraisal.progress}%</span>
                     </div>
                     <Progress value={appraisal.progress} />
                   </div>
-                </TableCell>
+                </TableCell> */}
                 <TableCell>
-                  <Button size="sm" onClick={() => handleViewAppraisal(appraisal.employeeId)}>
+                  <Button size="sm" onClick={() => handleViewAppraisal(appraisal.appraisal_id)}>
                     View
                   </Button>
                 </TableCell>

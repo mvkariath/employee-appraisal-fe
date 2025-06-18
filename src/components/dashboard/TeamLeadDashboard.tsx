@@ -18,14 +18,17 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useGetLeadsQuery } from "@/api-service/leads/leads.api";
+import { useRouter } from "next/navigation";
 
 const TeamLeadDashboard = () => {
   // Mock data - replace with actual data from your API
+  const router=useRouter()
   const teamName = "Software Engineers";
   const totalAppraisals = 12;
   const pendingAppraisalsCount = 5;
   const completedAppraisals = 7;
-
+ const {data, isLoading} = useGetLeadsQuery()
   const pastAppraisals: EmployeeAppraisalCardProps["appraisal"][] = [
     {
       employeeId: "4",
@@ -50,22 +53,7 @@ const TeamLeadDashboard = () => {
     },
   ];
 
-  const pendingAppraisals: EmployeeAppraisalCardProps["appraisal"][] = [
-    {
-      employeeId: "1",
-      employeeName: "Jane Doe",
-      dueDate: "2024-07-15",
-      progress: 60,
-      status: "in_progress",
-    },
-    {
-      employeeId: "2",
-      employeeName: "Peter Jones",
-      dueDate: "2024-07-20",
-      progress: 20,
-      status: "pending",
-    },
-  ];
+const pendingAppraisals = data?.slice().sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime()).slice(0, 3); // take top 3
 
   const scheduledMeetings = [
     {
@@ -113,7 +101,7 @@ const TeamLeadDashboard = () => {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{pendingAppraisalsCount}</div>
+              <div className="text-2xl font-bold">{data?.length}</div>
             </CardContent>
           </Card>
 
@@ -136,12 +124,12 @@ const TeamLeadDashboard = () => {
             <div className="mb-8">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Pending Appraisals</h2>
-                <Button variant="link" className="text-sm">
+                <Button variant="link" className="text-sm" onClick={()=>router.push('/leads/view-appraisal')}>
                   View All
                 </Button>
               </div>
               <div className="space-y-4">
-                {pendingAppraisals.map((appraisal) => (
+                {pendingAppraisals?.map((appraisal) => (
                   <EmployeeAppraisalCard
                     key={appraisal.employeeId}
                     appraisal={appraisal}

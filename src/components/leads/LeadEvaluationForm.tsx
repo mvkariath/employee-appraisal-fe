@@ -24,16 +24,20 @@ const competencies = [
 ];
 
 interface LeadEvaluationFormProps {
-  pastAppraisals: PastAppraisalSummary[];
-  isPastAppraisalsOpen: boolean;
-  setIsPastAppraisalsOpen: (open: boolean) => void;
+  evaluations:any,
+  onChange:(index,field,value)=>void
+  // isPastAppraisalsOpen: boolean;
+  // setIsPastAppraisalsOpen: (open: boolean) => void;
 }
 
+
 export const LeadEvaluationForm = ({
-  pastAppraisals,
-  isPastAppraisalsOpen,
-  setIsPastAppraisalsOpen,
+  evaluations,
+  onChange,
+  // isPastAppraisalsOpen,
+  // setIsPastAppraisalsOpen,
 }: LeadEvaluationFormProps) => {
+  
   return (
     <>
       <Card>
@@ -50,21 +54,60 @@ export const LeadEvaluationForm = ({
                 <TableHead className="w-1/4">Rating</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            {/* <TableBody>
               {competencies.map((competency) => (
                 <TableRow key={competency}>
                   <TableCell className="font-medium">{competency}</TableCell>
-                  <TableCell><Textarea id={`strengths-${competency}`} /></TableCell>
+                  <TableCell><Textarea id={`strengths-${competency}` } /></TableCell>
                   <TableCell><Textarea id={`improvements-${competency}`} /></TableCell>
                   <TableCell>
                     <Slider id={`rating-${competency}`} min={1} max={10} step={1} defaultValue={[5]} />
                   </TableCell>
                 </TableRow>
               ))}
-            </TableBody>
+            </TableBody> */}
+            <TableBody>
+            {evaluations.map((item, index) => (
+              <TableRow key={item.competency}>
+                <TableCell className="font-medium">{item.competency}</TableCell>
+                <TableCell>
+                  <Textarea
+                    id={`strengths-${item.competency}`}
+                    value={item.strengths}
+                    onChange={(e) =>
+                      onChange(index, "strengths", e.target.value)
+                    }
+                  />
+                </TableCell>
+                <TableCell>
+                  <Textarea
+                    id={`improvements-${item.competency}`}
+                    value={item.improvements}
+                    onChange={(e) =>
+                      onChange(index, "improvements", e.target.value)
+                    }
+                  />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-4">
+                    <Slider
+                      id={`rating-${item.competency}`}
+                      min={1}
+                      max={10}
+                      step={1}
+                      value={[item.rating]}
+                      onValueChange={(value) =>
+                        onChange(index, "rating", value[0])
+                      }
+                    />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
           </Table>
 
-          <div className="flex justify-between mt-6">
+          {/* <div className="flex justify-between mt-6">
             <Button variant="outline" onClick={() => setIsPastAppraisalsOpen(true)}>
               View Past Appraisals
             </Button>
@@ -72,15 +115,15 @@ export const LeadEvaluationForm = ({
               <Button variant="outline">Save as Draft</Button>
               <Button>Submit Evaluation</Button>
             </div>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
 
-      <PastAppraisalsModal
+      {/* <PastAppraisalsModal
         open={isPastAppraisalsOpen}
         onOpenChange={setIsPastAppraisalsOpen}
         pastAppraisals={pastAppraisals}
-      />
+      /> */}
     </>
   );
 };

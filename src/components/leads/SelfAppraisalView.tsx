@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { SelfAppraisalEntry } from "@/types";
+import { SelfAppraisalEntry } from "@/api-service/leads/types"; 
 
 interface SelfAppraisalViewProps {
   selfAppraisal: SelfAppraisalEntry[];
@@ -22,17 +22,17 @@ export const SelfAppraisalView = ({ selfAppraisal }: SelfAppraisalViewProps) => 
               <TableHead>Accomplishments</TableHead>
               <TableHead>Approach/Solution</TableHead>
               <TableHead>Improvement Possibilities</TableHead>
-              <TableHead>Strengths</TableHead>
+              <TableHead>Project Time Frame</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {selfAppraisal.map((entry) => (
               <TableRow key={entry.id}>
-                <TableCell>{entry.deliveryDetails}</TableCell>
+                <TableCell>{entry.delivery_details}</TableCell>
                 <TableCell>{entry.accomplishments}</TableCell>
-                <TableCell>{entry.approach}</TableCell>
-                <TableCell>{entry.improvements}</TableCell>
-                <TableCell>{entry.strengths}</TableCell>
+                <TableCell>{entry.approach_solution}</TableCell>
+                <TableCell>{entry.improvement_possibilities}</TableCell>
+                <TableCell>{entry.project_time_frame}</TableCell>
               </TableRow>
             ))}
           </TableBody>
