@@ -18,17 +18,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Users,
-  CheckCircle2,
-  Clock,
-  PlusIcon,
-} from "lucide-react";
+import { Users, CheckCircle2, Clock, PlusIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonGrid, CardSkeleton } from "@/components/ui/skeleton-grid";
 
 import { usePathname, useRouter } from "next/navigation";
 import AppraisalCycleModal from "@/components/hr/AppraisalCycleForm";
-import { useGetCyclesQuery, useUpdateCycleMutation } from "@/api-service/appraisalCycle/appraisalCycle.api";
+import {
+  useGetCyclesQuery,
+  useUpdateCycleMutation,
+} from "@/api-service/appraisalCycle/appraisalCycle.api";
 import { AppraisalCycle } from "@/api-service/appraisalCycle/types";
 import { toast } from "sonner";
 import { formatDate, getProgressColorClass } from "@/components/functions";
@@ -47,8 +47,6 @@ const Index = () => {
 
   const [updateCycle] = useUpdateCycleMutation();
 
-
-  // Sync fetched data to local state
   useEffect(() => {
     if (data) {
       setAppraisalCycles(data);
@@ -62,18 +60,17 @@ const Index = () => {
   const confirmCloseCycle = (cycleId: number) => {
     const payload = {
       id: cycleId,
-      status: "COMPLETED"
+      status: "COMPLETED",
     };
 
     updateCycle(payload)
       .unwrap()
       .then(() => {
-        toast.success("cycle closed successfully")
-
-      }).catch((error) => {
-        toast.error(error?.data?.message || "Cycle close failed");
-
+        toast.success("cycle closed successfully");
       })
+      .catch((error) => {
+        toast.error(error?.data?.message || "Cycle close failed");
+      });
     setCloseCycleModal({ open: false, cycleId: null });
   };
 
@@ -105,30 +102,72 @@ const Index = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
-        Loading cycles...
-      </div>
+      <Card className="bg-gray-200 h-[90vh] overflow-y-auto rounded-md dark:bg-gray-800">
+        <CardHeader className="px-6 pt-6 pb-0">
+          <div className="flex justify-between items-start">
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-64" />
+              <Skeleton className="h-6 w-80" />
+            </div>
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </CardHeader>
+
+        <CardContent className="w-full mx-auto px-6 py-8">
+          {/* Stats Cards Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {[1, 2, 3].map((item) => (
+              <Card key={item}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-8 w-16" />
+                    </div>
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Appraisal Cycles Skeleton */}
+          <SkeletonGrid
+            parentComponent="AppraisalCyclesPage"
+            gridStructure="grid grid-cols-1 sm:grid-cols-2 gap-2"
+          >
+            {[1, 2, 3, 4].map((item) => (
+              <CardSkeleton key={item} />
+            ))}
+          </SkeletonGrid>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto px-6 py-8">
-        <div className="mb-8 flex justify-between">
+    <Card className="border border-gray-200 bg-gray-100 h-[90vh] overflow-y-auto rounded-md dark:bg-gray-800">
+      <CardHeader className="px-6 pt-6 pb-0">
+        <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            <CardTitle className="text-4xl font-bold text-gray-900 mb-2">
               Appraisal Management
-            </h1>
-            <p className="text-lg text-gray-600">
+            </CardTitle>
+            <CardDescription className="text-lg">
               Streamline your performance review process
-            </p>
+            </CardDescription>
           </div>
-          <Button onClick={() => setIsModalOpen(true)} className="flex items-center">
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center"
+          >
             <PlusIcon />
             Add Cycle
           </Button>
         </div>
+      </CardHeader>
 
+      <CardContent className="w-full mx-auto px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
             <CardContent className="p-6">
@@ -165,23 +204,26 @@ const Index = () => {
           </Card>
         </div>
 
-        <div className="grid gap-8 mb-8">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl font-semibold">
               Appraisal Cycles
-            </h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {appraisalCycles?.map((cycle) => (
-                <Card key={cycle.id} className="hover:shadow-lg transition-shadow">
+                <Card
+                  key={cycle.id}
+                  className="hover:shadow-lg transition-shadow"
+                >
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div>
                         <CardTitle className="text-lg">{cycle.name}</CardTitle>
                         <CardDescription>
-                          <CardDescription>
-                            {formatDate(cycle.start_date)} - {formatDate(cycle.end_date)}
-                          </CardDescription>
-
+                          {formatDate(cycle.start_date)} -{" "}
+                          {formatDate(cycle.end_date)}
                         </CardDescription>
                       </div>
                       <Badge className={getStatusColor(cycle.status)}>
@@ -191,7 +233,12 @@ const Index = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <Progress value={getProgressFromStatus(cycle.status)} className={getProgressColorClass(getProgressFromStatus(cycle.status))} />
+                      <Progress
+                        value={getProgressFromStatus(cycle.status)}
+                        className={getProgressColorClass(
+                          getProgressFromStatus(cycle.status)
+                        )}
+                      />
                       <div className="flex gap-2 justify-between items-center">
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline">
@@ -200,7 +247,11 @@ const Index = () => {
                           {cycle.status !== "COMPLETED" && (
                             <Button
                               size="sm"
-                              onClick={() => router.push(`${pathname}/appraisal/${cycle.id}`)}
+                              onClick={() =>
+                                router.push(
+                                  `hr/dashboard/appraisal/${cycle.id}`
+                                )
+                              }
                               variant="default"
                             >
                               Manage
@@ -218,15 +269,14 @@ const Index = () => {
                           </Button>
                         )}
                       </div>
-
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </div>
-        </div>
-      </div>
+          </CardContent>
+        </Card>
+      </CardContent>
 
       <AppraisalCycleModal
         open={isModalOpen}
@@ -236,7 +286,9 @@ const Index = () => {
 
       <Dialog
         open={closeCycleModal.open}
-        onOpenChange={(open) => setCloseCycleModal({ open, cycleId: closeCycleModal.cycleId })}
+        onOpenChange={(open) =>
+          setCloseCycleModal({ open, cycleId: closeCycleModal.cycleId })
+        }
       >
         <DialogContent>
           <DialogHeader>
@@ -259,11 +311,10 @@ const Index = () => {
             >
               Close Cycle
             </Button>
-
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Card>
   );
 };
 
