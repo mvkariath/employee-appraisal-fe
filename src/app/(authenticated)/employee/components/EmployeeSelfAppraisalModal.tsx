@@ -373,7 +373,7 @@ export default function EmployeeSelfAppraisalModal({
             <p className="font-medium">{employeeData.name}</p>
           </div>
           <div>
-            <Label className="text-gray-500">Designation</Label>
+            <Label className="text-gray-500">Department</Label>
             <p className="font-medium">{employeeData.designation}</p>
           </div>
           <div>
@@ -649,7 +649,7 @@ export default function EmployeeSelfAppraisalModal({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[50px]">S#</TableHead>
+                  <TableHead className="w-[50px]">SN</TableHead>
                   <TableHead>Competencies</TableHead>
                   <TableHead>Strengths</TableHead>
                   <TableHead>Improvement Needs</TableHead>

@@ -15,7 +15,101 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import EmployeeSelfAppraisalModal from "../components/EmployeeSelfAppraisalModal";
 import { GeminiAppraisalSummaryChat } from "../components/SummaryGenerator";
+import { useGetPastAppraisalsQuery } from "@/api-service/appraisal/appraisal.api";
+import { useGetEmployeeByIdQuery } from "@/api-service/employees/employee.api";
+import { useGetAppraisalByEmployeeIdQuery } from "@/api-service/appraisal/appraisal.api";
+import { useUpdateAppraisalMutation } from "@/api-service/appraisal/appraisal.api";
+import { skipToken } from "@reduxjs/toolkit/query";
 // Mock data - same as your original
+function HRName({ id }: { id: number }) {
+  const { data, isLoading } = useGetEmployeeByIdQuery({ id });
+  if (isLoading) return <>Loading...</>;
+  return <>{data?.name || "Unknown HR"}</>;
+}
+function mapBackendAppraisalToFormData(appraisal: any) {
+  const sa = appraisal.self_appraisal?.[0] || {};
+  // Extract lead names from appraisalLeads
+  const leadNames =
+    appraisal.appraisalLeads?.map((al: any) => al.lead?.name).filter(Boolean) || [];
+
+  return {
+    leadNames,
+    selfAssessments: [
+      {
+        deliveryDetails: sa.delivery_details || "",
+        accomplishments: sa.accomplishments || "",
+        approaches: sa.approach_solution || "",
+        improvements: sa.improvement_possibilities || "",
+        timeFrame: sa.project_time_frame || "",
+      },
+    ],
+    performanceFactors: (appraisal.performance_factors || []).map((pf: any) => ({
+      competency: pf.competency || "",
+      strengths: pf.strengths || "",
+      improvementNeeds: pf.improvements || "",
+      rating: pf.rating?.toString() || "",
+    })),
+    individualDevelopmentPlan: {
+      technical:
+        appraisal.idp?.find((i: any) => i.competency === "TECHNICAL")
+          ?.technical_objective || "",
+      behavioral:
+        appraisal.idp?.find((i: any) => i.competency === "BEHAVIORAL")
+          ?.technical_objective || "",
+      functional:
+        appraisal.idp?.find((i: any) => i.competency === "FUNCTIONAL")
+          ?.technical_objective || "",
+    },
+    additionalRemarks: appraisal.additionalRemarks || "",
+  };
+}
+function mapEmployeeToModalData(employee: any): any {
+  return {
+    name: employee?.name || "",
+    designation: employee?.role || "",
+    employeeNumber: employee?.employeeId || "",
+    team: employee?.department || "",
+  };
+}
+function getAverageRating(performanceFactors: any[]): string {
+  if (!performanceFactors || performanceFactors.length === 0) return "N/A";
+  const ratings = performanceFactors
+    .map((pf) => pf.rating)
+    .filter((r) => typeof r === "number" && !isNaN(r));
+  if (ratings.length === 0) return "N/A";
+  const avg = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
+  return avg.toFixed(2);
+}
+const statusFlow = [
+  "INITIATED",
+  "SELF_APPRAISED",
+  "INITIATE_FEEDBACK",
+  "FEEDBACK_SUBMITTED",
+  "MEETING_DONE",
+  "DONE",
+  "ALL_DONE",
+];
+function getProgressForStatus(status: string): number {
+  const idx = statusFlow.indexOf(status);
+  if (idx === -1) return 0;
+  return Math.round(((idx + 1) / statusFlow.length) * 100);
+}
+function mapBackendStatusToUI(
+  status: string
+): "pending" | "completed" | "overdue" {
+  if (status === "ALL_DONE") return "completed";
+  if (
+    status === "INITIATED" ||
+    status === "SELF_APPRAISED" ||
+    status === "INITIATE_FEEDBACK" ||
+    status === "FEEDBACK_SUBMITTED" ||
+    status === "MEETING_DONE" ||
+    status === "DONE"
+  )
+    return "pending";
+  // Add more mappings as needed
+  return "pending";
+}
 const initialAppraisals = [
   {
     id: 1,
@@ -30,10 +124,10 @@ const initialAppraisals = [
       name: "Sarah Johnson",
       designation: "Senior Developer",
       employeeNumber: "EMP-2045",
-      team: "Product Development"
+      team: "Product Development",
     },
     selfAppraisal: null,
-    submitted: false
+    submitted: false,
   },
   {
     id: 2,
@@ -48,87 +142,84 @@ const initialAppraisals = [
       name: "Sarah Johnson",
       designation: "Senior Developer",
       employeeNumber: "EMP-2045",
-      team: "Product Development"
+      team: "Product Development",
     },
     selfAppraisal: {
       leadNames: ["Mike Chen", "Lisa Park"],
       deliveryDetails: [
         "Implemented new authentication system",
         "Optimized database queries",
-        "Led team onboarding sessions"
+        "Led team onboarding sessions",
       ],
       accomplishments: [
         "Reduced API response time by 40%",
         "Mentored 2 junior developers",
-        "Documented key processes"
+        "Documented key processes",
       ],
       approaches: [
         "Used JWT for secure authentication",
         "Added proper indexing to queries",
-        "Created structured onboarding plan"
+        "Created structured onboarding plan",
       ],
       improvements: [
         "Better documentation standards",
         "More thorough code reviews",
-        "Faster onboarding process"
+        "Faster onboarding process",
       ],
-      timeFrames: [
-        "March 2024",
-        "February 2024",
-        "January 2024"
-      ]
+      timeFrames: ["March 2024", "February 2024", "January 2024"],
     },
     performanceFactors: [
       {
         competency: "Technical",
         strengths: "Excellent problem-solving skills, strong coding abilities",
         improvementNeeds: "Could document solutions better",
-        rating: "9"
+        rating: "9",
       },
       {
         competency: "Functional",
         strengths: "Deep understanding of business requirements",
         improvementNeeds: "Need to think more strategically",
-        rating: "8"
+        rating: "8",
       },
       {
         competency: "Communication",
         strengths: "Clear in written communication",
         improvementNeeds: "More assertive in meetings",
-        rating: "7"
+        rating: "7",
       },
       {
         competency: "Energy & Drive",
         strengths: "Consistently motivated",
         improvementNeeds: "Better work-life balance",
-        rating: "8"
+        rating: "8",
       },
       {
         competency: "Responsibilities & Trust",
         strengths: "Reliable and dependable",
         improvementNeeds: "Could take more initiative",
-        rating: "9"
+        rating: "9",
       },
       {
         competency: "Teamwork",
         strengths: "Collaborative and supportive",
         improvementNeeds: "Could mentor more junior staff",
-        rating: "8"
+        rating: "8",
       },
       {
         competency: "Managing Processes & Work",
         strengths: "Good at task prioritization",
         improvementNeeds: "Better at estimating timelines",
-        rating: "7"
-      }
+        rating: "7",
+      },
     ],
     individualDevelopmentPlan: {
       technical: "Complete AWS certification by Q3 2024",
       behavioral: "Improve public speaking skills",
-      functional: "Take on more architectural responsibilities"
+      functional: "Take on more architectural responsibilities",
     },
-    additionalRemarks: "I particularly enjoyed working on the authentication system and would like to take on more security-related tasks in the future.",
-    submitted: true
+    additionalRemarks:
+      "I particularly enjoyed working on the authentication system and would like to take on more security-related tasks in the future.",
+    submitted: true,
   },
   {
     id: 3,
@@ -143,88 +234,85 @@ const initialAppraisals = [
       name: "Sarah Johnson",
       designation: "Senior Developer",
       employeeNumber: "EMP-2045",
-      team: "Product Development"
+      team: "Product Development",
     },
     selfAppraisal: {
       leadNames: ["Mike Chen"],
       deliveryDetails: [
         "Q4 feature rollout",
         "Documentation overhaul",
-        "Client demo preparation"
+        "Client demo preparation",
       ],
       accomplishments: [
         "Delivered features on time",
         "Improved documentation by 30%",
-        "Received positive client feedback"
+        "Received positive client feedback",
       ],
       approaches: [
         "Agile development methodology",
         "Created documentation templates",
-        "Prepared detailed demo scenarios"
+        "Prepared detailed demo scenarios",
       ],
       improvements: [
         "More detailed documentation",
         "Better time estimation",
-        "More proactive communication"
+        "More proactive communication",
       ],
-      timeFrames: [
-        "October - December 2023",
-        "November 2023",
-        "December 2023"
-      ]
+      timeFrames: ["October - December 2023", "November 2023", "December 2023"],
     },
     performanceFactors: [
       {
         competency: "Technical",
         strengths: "Solid implementation skills",
         improvementNeeds: "Need to learn new testing frameworks",
-        rating: "8"
+        rating: "8",
       },
       {
         competency: "Functional",
         strengths: "Good at requirements analysis",
         improvementNeeds: "Should understand business context better",
-        rating: "7"
+        rating: "7",
       },
       {
         competency: "Communication",
         strengths: "Good listener",
         improvementNeeds: "More confident in presentations",
-        rating: "7"
+        rating: "7",
       },
       {
         competency: "Energy & Drive",
         strengths: "Consistent performer",
         improvementNeeds: "More innovative thinking",
-        rating: "7"
+        rating: "7",
       },
       {
         competency: "Responsibilities & Trust",
         strengths: "Takes ownership of tasks",
         improvementNeeds: "Should flag risks earlier",
-        rating: "8"
+        rating: "8",
       },
       {
         competency: "Teamwork",
         strengths: "Helpful team player",
         improvementNeeds: "Could lead more team activities",
-        rating: "8"
+        rating: "8",
       },
       {
         competency: "Managing Processes & Work",
         strengths: "Good at following processes",
         improvementNeeds: "Should suggest process improvements",
-        rating: "7"
-      }
+        rating: "7",
+      },
     ],
     individualDevelopmentPlan: {
       technical: "Learn React testing library",
       behavioral: "Improve presentation skills",
-      functional: "Understand business metrics better"
+      functional: "Understand business metrics better",
     },
-    additionalRemarks: "The Q4 project was challenging but rewarding. I learned a lot about client requirements and expectations.",
-    submitted: true
-  }
+    additionalRemarks:
+      "The Q4 project was challenging but rewarding. I learned a lot about client requirements and expectations.",
+    submitted: true,
+  },
 ];
 
 const leadOptions = [
@@ -235,7 +323,13 @@ const leadOptions = [
   "David Brown",
 ];
 
-type AppraisalStatus = "pending" | "completed" | "overdue";
+type AppraisalStatus =
+  | "NA"
+  | "INITIATED"
+  | "SELF-APPRAISED"
+  | "LEAD-APPRAISED"
+  | "HR-APPRAISED"
+  | "ALL_DONE";
 
 const statusIcons = {
   pending: <Clock className="h-4 w-4" />,
@@ -256,101 +350,100 @@ export default function AppraisalsPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingAppraisal, setViewingAppraisal] = useState<any>(null);
   const [draftData, setDraftData] = useState<any>(null);
+  let employeeId: number | null = null;
+  if (typeof window !== "undefined") {
+    const tokenStr = localStorage.getItem("token");
+    if (tokenStr) {
+      try {
+        const token = JSON.parse(tokenStr);
+        employeeId = Number(token.id);
+      } catch {
+        employeeId = null;
+      }
+    }
+  }
+  const {
+    data: allAppraisals = [],
+    isLoading: isCurrentLoading,
+    error: currentError,
+  } = useGetAppraisalByEmployeeIdQuery(employeeId ? employeeId : skipToken);
 
+  const currentAppraisal =
+    allAppraisals.find((a: any) => a.current_status !== "ALL_DONE") || null;
+  console.log("Current Appraisal:", currentAppraisal);
   // FIXED: Derive current and past appraisals from the main state
-  const currentAppraisal = appraisals.find((a) => a.status === "pending") || null;
-  const pastAppraisals = appraisals.filter((a) => a.status === "completed");
+  // const currentAppraisal =
+  //   appraisals.find((a) => a.status === "pending") || null;
+  // const pastAppraisals = appraisals.filter((a) => a.status === "completed");
+  const {
+    data: pastAppraisals = [],
+    isLoading,
+    error,
+  } = useGetPastAppraisalsQuery(employeeId ? employeeId : skipToken);
+  console.log("Past Appraisals:", pastAppraisals);
+  //   const hrIds = Array.from(
+  //   new Set(
+  //     pastAppraisals
+  //       .map(a => a.cycle?.created_by?.id)
+  //       .filter((id): id is number => typeof id === "number")
+  //   )
+  // );
+  // console.log("HR IDs:", hrIds);
+  // const hrDetails = hrIds.map((id) => {
+  //   const { data } = useGetEmployeeByIdQuery({ id: id as number });
+  //   console.log("HR Data for ID:", id, data);
+  //   return { id, name: data?.name || "Loading..." };
+  // });
 
-  // FIXED: Update the appraisals array instead of just currentAppraisal
-  const handleSubmitSelfAppraisal = (
-    formData: any,
-    action: "save" | "submit"
-  ) => {
-    if (action === "save") {
-      console.log("Saving draft:", formData);
-      setDraftData(formData);
+  // const hrIdToName = Object.fromEntries(hrDetails.map((hr) => [hr.id, hr.name]));
+
+// FIXED: Update the appraisals array instead of just currentAppraisal
+const [updateAppraisal] = useUpdateAppraisalMutation();
+  const handleSubmitSelfAppraisal = async (formData: any, action: "save" | "submit") => {
+    if (!currentAppraisal) return;
+    try {
+      await updateAppraisal({
+        id: currentAppraisal.id,
+        data: {
+          self_appraisal: [
+            {
+              delivery_details: formData.selfAssessments[0].deliveryDetails,
+              accomplishments: formData.selfAssessments[0].accomplishments,
+              approach_solution: formData.selfAssessments[0].approaches,
+              improvement_possibilities: formData.selfAssessments[0].improvements,
+              project_time_frame: formData.selfAssessments[0].timeFrame,
+            },
+          ],
+          // Add other fields as needed
+          // Indicate draft or submitted
+          isDraft: action === "save",
+          isSubmitted: action === "submit",
+          current_status: action === "submit" ? "SELF_APPRAISED" : currentAppraisal.current_status,
+        },
+      }).unwrap();
+
       setIsModalOpen(false);
-      // Optional: Show success message
-      alert("Draft saved successfully!");
-    } else {
-      console.log("Submitting appraisal:", formData);
-      
-      if (currentAppraisal) {
-        // FIXED: Update the appraisals array with the submitted data
-        setAppraisals(prevAppraisals => 
-          prevAppraisals.map(appraisal => 
-            appraisal.id === currentAppraisal.id 
-              ? {
-                  ...appraisal,
-                  selfAppraisal: formData,
-                  submitted: true,
-                  progress: 100, // Update progress to 100%
-                }
-              : appraisal
-          )
-        );
-        
-        // Clear draft data after successful submission
-        setDraftData(null);
-        
-        // Optional: Show success message
+      if (action === "save") {
+        alert("Draft saved successfully!");
+      } else {
         alert("Self-appraisal submitted successfully!");
       }
-      setIsModalOpen(false);
+    } catch (err) {
+      alert("Failed to save/submit appraisal. Please try again.");
     }
   };
 
   const handleViewAppraisal = (appraisal: any) => {
-    if (!appraisal) return;
+  if (!appraisal) return;
 
-    // FIXED: Better handling of form data structure
-    let formattedData;
-    
-    if (appraisal.selfAppraisal) {
-      // Check if it's already in the correct format (from recent submission)
-      if (appraisal.selfAppraisal.selfAssessments) {
-        formattedData = appraisal.selfAppraisal;
-      } else {
-        // Transform legacy format to new format
-        const maxLength = Math.max(
-          appraisal.selfAppraisal.deliveryDetails?.length || 0,
-          appraisal.selfAppraisal.accomplishments?.length || 0,
-          appraisal.selfAppraisal.approaches?.length || 0,
-          appraisal.selfAppraisal.improvements?.length || 0,
-          appraisal.selfAppraisal.timeFrames?.length || 0
-        );
-
-        formattedData = {
-          leadNames: appraisal.selfAppraisal.leadNames || [],
-          selfAssessments: Array.from({ length: maxLength }, (_, index) => ({
-            deliveryDetails: appraisal.selfAppraisal.deliveryDetails?.[index] || '',
-            accomplishments: appraisal.selfAppraisal.accomplishments?.[index] || '',
-            approaches: appraisal.selfAppraisal.approaches?.[index] || '',
-            improvements: appraisal.selfAppraisal.improvements?.[index] || '',
-            timeFrame: appraisal.selfAppraisal.timeFrames?.[index] || ''
-          })),
-          performanceFactors: appraisal.performanceFactors || [],
-          individualDevelopmentPlan: appraisal.individualDevelopmentPlan || {},
-          additionalRemarks: appraisal.additionalRemarks || ''
-        };
-      }
-    } else {
-      // No self appraisal data
-      formattedData = {
-        leadNames: [],
-        selfAssessments: [],
-        performanceFactors: [],
-        individualDevelopmentPlan: {},
-        additionalRemarks: ''
-      };
-    }
-
-    setViewingAppraisal({
-      ...appraisal,
-      selfAppraisal: formattedData
-    });
-    setIsViewModalOpen(true);
-  };
+  // Transform backend self_appraisal array to FormData
+  setViewingAppraisal({
+    ...appraisal,
+    selfAppraisal: mapBackendAppraisalToFormData(appraisal),
+  });
+  setIsViewModalOpen(true);
+  setIsViewModalOpen(true);
+};
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -363,16 +456,22 @@ export default function AppraisalsPage() {
           <Card>
             <CardHeader className="border-b">
               <div className="flex justify-between items-center">
-                <CardTitle>{currentAppraisal.period} Appraisal</CardTitle>
+                <CardTitle>{currentAppraisal.cycle?.name} </CardTitle>
                 <Badge
                   className={
-                    statusColors[currentAppraisal.status as AppraisalStatus]
+                    statusColors[
+                      mapBackendStatusToUI(currentAppraisal.current_status)
+                    ]
                   }
                 >
                   <div className="flex items-center gap-1">
-                    {statusIcons[currentAppraisal.status as AppraisalStatus]}
+                    {
+                      statusIcons[
+                        mapBackendStatusToUI(currentAppraisal.current_status)
+                      ]
+                    }
                     <span className="capitalize">
-                      {currentAppraisal.status}
+                      {currentAppraisal.current_status}
                     </span>
                   </div>
                 </Badge>
@@ -382,57 +481,52 @@ export default function AppraisalsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <p className="text-sm text-gray-500">HR</p>
-                  <p className="font-medium">{currentAppraisal.hr}</p>
+                  {currentAppraisal.cycle?.created_by?.id ? (
+                    <HRName id={currentAppraisal.cycle.created_by.id} />
+                  ) : (
+                    "N/A"
+                  )}
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Due Date</p>
-                  <p className="font-medium">{currentAppraisal.dueDate}</p>
+                  <p className="font-medium">
+                    {currentAppraisal.createdAt
+                      ? new Date(
+                          new Date(currentAppraisal.createdAt).getTime() +
+                            7 * 24 * 60 * 60 * 1000
+                        ).toLocaleDateString()
+                      : "N/A"}
+                  </p>
                 </div>
               </div>
 
               <div className="mb-4">
                 <p className="text-sm text-gray-500 mb-1">Progress</p>
-                <Progress value={currentAppraisal.progress} className="h-2" />
+                <Progress
+                  value={getProgressForStatus(currentAppraisal.current_status)}
+                  className="h-2"
+                />
                 <p className="text-xs text-gray-500 mt-1">
-                  {currentAppraisal.progress}% complete
+                  {getProgressForStatus(currentAppraisal.current_status)}%
+                  complete
                 </p>
               </div>
 
-              {currentAppraisal.requiresSelfAppraisal && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-blue-500" />
-                    <div>
-                      <p className="font-medium">
-                        {currentAppraisal.submitted
-                          ? "Self Appraisal Submitted"
-                          : draftData
-                          ? "Draft Saved - Continue Appraisal"
-                          : "Self Appraisal Required"}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {currentAppraisal.submitted
-                          ? "You can view your submitted appraisal below."
-                          : draftData
-                          ? "You have a saved draft. Continue where you left off."
-                          : "Please complete your self appraisal to proceed."}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3 mt-3">
-                    {currentAppraisal.submitted ? (
-                      <Button
-                        variant="outline"
-                        onClick={() => handleViewAppraisal(currentAppraisal)}
-                      >
-                        View Submitted Appraisal
-                      </Button>
-                    ) : (
-                      <Button onClick={() => setIsModalOpen(true)}>
-                        {draftData ? "Continue Draft" : "Complete Self Appraisal"}
-                      </Button>
-                    )}
-                  </div>
+              {currentAppraisal && (
+                <div className="flex gap-3 mt-3">
+                  {currentAppraisal.self_appraisal &&
+                  currentAppraisal.self_appraisal.length > 0 ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => handleViewAppraisal(currentAppraisal)}
+                    >
+                      View Submitted Appraisal
+                    </Button>
+                  ) : (
+                    <Button onClick={() => setIsModalOpen(true)}>
+                      Fill Self Appraisal
+                    </Button>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -451,20 +545,28 @@ export default function AppraisalsPage() {
         <h2 className="text-xl font-semibold mb-4">Past Appraisals</h2>
         {pastAppraisals.length > 0 ? (
           <div className="space-y-4">
-            {pastAppraisals.map((appraisal) => (
+            {pastAppraisals.map((appraisal: any) => (
               <Card key={appraisal.id}>
                 <CardHeader className="border-b">
                   <div className="flex justify-between items-center">
-                    <CardTitle>{appraisal.period} Appraisal</CardTitle>
+                    <CardTitle>{appraisal.cycle.name}</CardTitle>
                     <div className="flex items-center gap-3">
                       <Badge
                         className={
-                          statusColors[appraisal.status as AppraisalStatus]
+                          statusColors[
+                            mapBackendStatusToUI(appraisal.current_status)
+                          ]
                         }
                       >
                         <div className="flex items-center gap-1">
-                          {statusIcons[appraisal.status as AppraisalStatus]}
-                          <span className="capitalize">{appraisal.status}</span>
+                          {
+                            statusIcons[
+                              mapBackendStatusToUI(appraisal.current_status)
+                            ]
+                          }
+                          <span className="capitalize">
+                            {appraisal.current_status}
+                          </span>
                         </div>
                       </Badge>
                       <Button
@@ -481,17 +583,34 @@ export default function AppraisalsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
                       <p className="text-sm text-gray-500">HR</p>
-                      <p className="font-medium">{appraisal.hr}</p>
+                      {/* <p className="font-medium"> {hrIdToName[appraisal.cycle?.created_by] || "Loading..."}</p>
+                       */}
+                      {appraisal.cycle?.created_by?.id ? (
+                        <HRName id={appraisal.cycle.created_by.id} />
+                      ) : (
+                        "N/A"
+                      )}
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Completed On</p>
-                      <p className="font-medium">{appraisal.dueDate}</p>
+                      <p className="font-medium">
+                        {appraisal.closed_at
+                          ? new Date(appraisal.closed_at).toLocaleDateString(
+                              "en-IN",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )
+                          : "N/A"}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Rating</p>
                       <p className="font-medium flex items-center gap-1">
                         <span className="text-yellow-500">★</span>
-                        {appraisal.rating ? `${appraisal.rating}/10.0` : 'Pending'}
+                        {getAverageRating(appraisal.performance_factors)}
                       </p>
                     </div>
                   </div>
@@ -504,9 +623,9 @@ export default function AppraisalsPage() {
                       <p className="text-gray-700">{appraisal.additionalRemarks}</p>
                     </div>
                   )} */}
-                  {appraisal.selfAppraisal && (
+                  {/* {appraisal.selfAppraisal && (
                     <GeminiAppraisalSummaryChat appraisalData={appraisal} />
-                  )}
+                  )} */}
                 </CardContent>
               </Card>
             ))}
@@ -521,14 +640,15 @@ export default function AppraisalsPage() {
       </div>
 
       {/* Self Appraisal Modal */}
-      {currentAppraisal && !currentAppraisal.submitted && (
+      {currentAppraisal && currentAppraisal.current_status !== "ALL DONE" && (
         <EmployeeSelfAppraisalModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmitSelfAppraisal}
-          employeeData={currentAppraisal.employeeData}
+          employeeData={mapEmployeeToModalData(currentAppraisal.employee)}
           leadOptions={leadOptions}
           initialData={draftData}
+          isReadOnly={!!(currentAppraisal.self_appraisal && currentAppraisal.self_appraisal.length > 0 && currentAppraisal.current_status === "SELF_APPRAISED")}
         />
       )}
 
@@ -542,10 +662,11 @@ export default function AppraisalsPage() {
             setViewingAppraisal(null);
           }}
           onSubmit={() => {}}
-          employeeData={viewingAppraisal.employeeData}
+          employeeData={mapEmployeeToModalData(viewingAppraisal.employee)}
           leadOptions={leadOptions}
           isReadOnly={true}
           initialData={viewingAppraisal.selfAppraisal}
+
         />
       )}
     </div>

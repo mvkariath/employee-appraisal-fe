@@ -19,6 +19,9 @@ export const appraisalApi = baseApi.injectEndpoints({
     getPastAppraisals: builder.query({
       query: (employeeId) => `/appraisal/past-appraisals/${employeeId}`,
     }),
+    getAppraisalByEmployeeId: builder.query<any[],number>({
+      query: (employeeId) => `/appraisal/appraisal/employee/${employeeId}`,
+    }),
 
     createAppraisals: builder.mutation<Appraisal[], any>({
       query: (payload) => ({
@@ -61,6 +64,7 @@ export const {
   useGetAppraisalByIdQuery,
   useGetAppraisalsByCycleIdQuery,
   useGetPastAppraisalsQuery,
+  useGetAppraisalByEmployeeIdQuery,
   useCreateAppraisalsMutation,
   useUpdateAppraisalMutation,
   useDeleteAppraisalMutation,
