@@ -9,20 +9,22 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Clock, Star, MessageCircle } from "lucide-react";
+import { useGetEmployeeByIdQuery } from "@/api-service/employees/employee.api";
+import { skipToken } from "@reduxjs/toolkit/query";
 
 
 // Dummy employee data
-const dummyEmployee = {
-	employeeId: "EMP001",
-	email: "jane.doe@example.com",
-	name: "Jane Doe",
-	age: 28,
-	role: "hr",
-	password: "securePassword123",
-	experience: 5,
-	status: "ACTIVE",
-	dateOfJoining: new Date("2022-06-15"),
-};
+// const dummyEmployee = {
+// 	employeeId: "EMP001",
+// 	email: "jane.doe@example.com",
+// 	name: "Jane Doe",
+// 	age: 28,
+// 	role: "hr",
+// 	password: "securePassword123",
+// 	experience: 5,
+// 	status: "ACTIVE",
+// 	dateOfJoining: new Date("2022-06-15"),
+// };
 
 // Dummy summary and feedback
 const employeeSummary = {
@@ -45,12 +47,38 @@ const feedbackList = [
 ];
 
 const EmpDashboardPage = () => {
+	let token: any | null = null;
+  if (typeof window !== "undefined") {
+    const tokenStr = localStorage.getItem("token"); 
+	if (tokenStr) {
+    try {
+      token = JSON.parse(tokenStr);
+      console.log("Parsed token:", token);
+    } catch {
+      token = null;
+      console.log("Token is not valid JSON:", tokenStr);
+    }
+  }
+	
+  }
+
+  if (!token) {
+    return <div className="p-8 text-center">Loading employee info...</div>;
+  }
+  const employeeId = token?.id;
+  console.log("Employee ID:", employeeId);
+  const { data: employee, isLoading: loadingEmployee, error: errorEmployee } =
+  useGetEmployeeByIdQuery(employeeId ? { id: Number(employeeId) } : skipToken);
+  console.log("Employee data:", employee);
+	if (loadingEmployee) {
+		return <div className="p-8 text-center">Loading employee data...</div>;
+	}
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
 			<div className="container mx-auto px-6 py-8">
 				<div className="mb-8">
 					<h1 className="text-4xl font-bold text-gray-900 mb-2">
-						Welcome, {dummyEmployee.name}
+						Welcome, {employee?.name}
 					</h1>
 					<p className="text-lg text-gray-600">
 						Here's your latest appraisal summary and feedback.
@@ -88,7 +116,7 @@ const EmpDashboardPage = () => {
 							<div className="flex items-center justify-between">
 								<div>
 									<p className="text-orange-100">Status</p>
-									<p className="text-3xl font-bold">{dummyEmployee.status}</p>
+									<p className="text-3xl font-bold">{employee?.status}</p>
 								</div>
 								<Clock className="h-8 w-8 text-orange-200" />
 							</div>
@@ -106,20 +134,20 @@ const EmpDashboardPage = () => {
 						<CardContent>
 							<div className="space-y-2">
 								<div>
-									<span className="font-semibold">Employee ID:</span> {dummyEmployee.employeeId}
+									<span className="font-semibold">Employee ID:</span> {employee?.employeeId}
 								</div>
 								<div>
-									<span className="font-semibold">Email:</span> {dummyEmployee.email}
+									<span className="font-semibold">Email:</span> {employee?.email}
 								</div>
 								<div>
-									<span className="font-semibold">Role:</span> {dummyEmployee.role}
+									<span className="font-semibold">Role:</span> {employee?.role}
 								</div>
 								<div>
-									<span className="font-semibold">Experience:</span> {dummyEmployee.experience} years
+									<span className="font-semibold">Experience:</span> {employee?.experience} years
 								</div>
 								<div>
 									<span className="font-semibold">Date of Joining:</span>{" "}
-									{dummyEmployee.dateOfJoining.toLocaleDateString()}
+									{employee?.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString() : ""}
 								</div>
 								<div>
 									<span className="font-semibold">Progress:</span>
