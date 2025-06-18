@@ -24,7 +24,7 @@ import {
   Video,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +33,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Competency } from "@/components/hr/PerformanceFactorTable";
 import EmployeeForm from "./components/EmployeeForm";
+import { useGetAppraisalsByCycleIdQuery } from "@/api-service/appraisal/appraisal.api";
+import { useParams } from "next/navigation";
+import { Employee } from "@/types";
 
 const Index = () => {
   const [activeView, setActiveView] = useState("dashboard");
@@ -40,46 +43,25 @@ const Index = () => {
   const [displayMode, setDisplayMode] = useState("card");
   const [isViewForm, setIsViewForm] = useState(false);
   const [isIdpModalOpen, setIsIdpModalOpen] = useState(false);
-  const [currentIdpEmployee, setCurrentIdpEmployee] = useState(null);
+  const [currentIdpEmployee, setCurrentIdpEmployee] = useState<Employee>();
   const [showConfirmClose, setShowConfirmClose] = useState(false);
   const [showConfirmPushToLead, setShowConfirmPushToLead] = useState(false);
-  const [currentPushEmployee, setCurrentPushEmployee] = useState(null);
+  const [currentPushEmployee, setCurrentPushEmployee] = useState<Employee>();
 
-  const [employees, setEmployees] = useState([
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      department: "Engineering",
-      role: "Senior Developer",
-      cycle: "Q1 2024 Performance Review",
-      status: "Self-Assessment Complete",
-      stage: "Lead Review",
-      progress: 60,
-      lead: "Mike Chen",
-    },
-    {
-      id: 2,
-      name: "David Rodriguez",
-      department: "Marketing",
-      role: "Marketing Specialist",
-      cycle: "Q1 2024 Performance Review",
-      status: "Pending Self-Assessment",
-      stage: "Employee Form",
-      progress: 20,
-      lead: "Lisa Park",
-    },
-    {
-      id: 3,
-      name: "Emily Chen",
-      department: "Design",
-      role: "UX Designer",
-      cycle: "Q1 2024 Performance Review",
-      status: "Meeting Scheduled",
-      stage: "Final Review",
-      progress: 80,
-      lead: "John Smith",
-    },
-  ]);
+  const [employees, setEmployees] = useState<Employee[]>([])
+
+  const params = useParams();
+  const id = params.id; // This is the slug
+
+  const { data, isLoading } = useGetAppraisalsByCycleIdQuery(id);
+
+  console.log("Ddddd", data)
+  useEffect(() => {
+    if (data && Array.isArray(data)) {
+      const extractedEmployees = data.map((entry) => entry);
+      setEmployees(extractedEmployees);
+    }
+  }, [data])
 
   const mockSelfAppraisal = {
     delivery_details:
@@ -117,28 +99,54 @@ const Index = () => {
     },
   ];
 
-  const getStatusColor = (status) => {
+  const getProgressFromStatus = (status: string): number => {
     switch (status) {
-      case "Active":
-        return "bg-green-100 text-green-800";
-      case "Planning":
+      case "NA":
+        return 0;
+      case "INITIATED":
+        return 10;
+      case "SELF_APPRAISED":
+        return 25;
+      case "INITIATE_FEEDBACK":
+        return 40;
+      case "FEEDBACK_SUBMITTED":
+        return 60;
+      case "MEETING_DONE":
+        return 75;
+      case "DONE":
+        return 90;
+      case "ALL_DONE":
+        return 100;
+      default:
+        return 0;
+    }
+  };
+
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "NA":
+        return "bg-red-100 text-red-800";
+      case "INITIATED":
+        return "bg-red-100 text-red-800";
+      case "SELF_APPRAISED":
         return "bg-blue-100 text-blue-800";
-      case "Upcoming":
+      case "INITIATE_FEEDBACK":
         return "bg-gray-100 text-gray-800";
-      case "Self-Assessment Complete":
+      case "FEEDBACK_SUBMITTED":
         return "bg-blue-100 text-blue-800";
-      case "Pending Self-Assessment":
+      case "MEETING_DONE":
         return "bg-yellow-100 text-yellow-800";
-      case "Meeting Scheduled":
+      case "DONE":
         return "bg-purple-100 text-purple-800";
-      case "Finished":
+      case "ALL_DONE":
         return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  const handlePushToLead = (employee) => {
+  const handlePushToLead = (employee: Employee) => {
     setCurrentPushEmployee(employee);
     setShowConfirmPushToLead(true);
   };
@@ -153,25 +161,25 @@ const Index = () => {
         prev.map((emp) =>
           emp.id === currentPushEmployee.id
             ? {
-                ...emp,
-                stage: "Final Review",
-                progress: 80,
-                status: "Meeting Scheduled",
-              }
+              ...emp,
+              stage: "FEEDBACK_SUBMITTED",
+              progress: 80,
+              status: "Meeting Scheduled",
+            }
             : emp
         )
       );
     }
     setShowConfirmPushToLead(false);
-    setCurrentPushEmployee(null);
+    setCurrentPushEmployee(undefined);
   };
 
   const cancelPushToLead = () => {
     setShowConfirmPushToLead(false);
-    setCurrentPushEmployee(null);
+    setCurrentPushEmployee(undefined);
   };
 
-  const handleConductMeeting = (employee) => {
+  const handleConductMeeting = (employee: Employee) => {
     setCurrentIdpEmployee(employee);
     setIsIdpModalOpen(true);
   };
@@ -191,7 +199,7 @@ const Index = () => {
       );
     }
     setIsIdpModalOpen(false);
-    setCurrentIdpEmployee(null);
+    setCurrentIdpEmployee(undefined);
     setShowConfirmClose(false);
   };
 
@@ -347,11 +355,11 @@ const Index = () => {
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">
-                  Current Stage: {employee.stage}
+                  Current Status: {employee.status}
                 </span>
-                <span className="text-gray-600">{employee.progress}%</span>
+                {getProgressFromStatus(employee.status)}%
               </div>
-              <Progress value={employee.progress} className="h-2" />
+              <Progress value={getProgressFromStatus(employee.status)} className="h-2" />
               <div className="flex gap-2 flex-wrap">
                 <Button
                   size="sm"
@@ -366,7 +374,7 @@ const Index = () => {
                   <User className="h-4 w-4 mr-1" />
                   Contact
                 </Button>
-                {employee.stage === "Lead Review" && (
+                {employee.status === "SELF_APPRAISED" && (
                   <Button
                     size="sm"
                     variant="default"
@@ -377,7 +385,7 @@ const Index = () => {
                     Push to Lead
                   </Button>
                 )}
-                {employee.stage === "Final Review" && (
+                {employee.status === "FEEDBACK_SUBMITTED" && (
                   <Button
                     size="sm"
                     variant="default"
@@ -453,9 +461,9 @@ const Index = () => {
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center gap-2">
-                  <Progress value={employee.progress} className="h-2 w-32" />
+                  <Progress value={getProgressFromStatus(employee.status)} className="h-2" />
                   <span className="text-sm text-gray-500">
-                    {employee.progress}%
+                    {getProgressFromStatus(employee.status)}%
                   </span>
                 </div>
               </td>
@@ -476,7 +484,7 @@ const Index = () => {
                     Contact
                   </Button>
 
-                  {employee.stage === "Lead Review" && (
+                  {employee.status === "SELF_APPRAISED" && (
                     <Button
                       size="sm"
                       variant="ghost"
@@ -487,7 +495,7 @@ const Index = () => {
                       Push to Lead
                     </Button>
                   )}
-                  {employee.stage === "Final Review" && (
+                  {employee.status === "FEEDBACK_SUBMITTED" && (
                     <Button
                       size="sm"
                       variant="ghost"

@@ -1,14 +1,17 @@
 // employee-appraisal-fe/src/types/index.ts
 
 export interface Employee {
-  id: string;
+      id:number
+  employeeId: string;
+  email: string;
   name: string;
+  age: number;
+  password: string;
+  role: string;
+  department:string;
   dateOfJoining: string;
-  yearsOfExperience: number;
-  phone: string;
-  designation: string;
-  team: string;
-  teamLeads: string[];
+  experience: number;
+  status: string;
 }
 
 export interface EmployeeAppraisal{

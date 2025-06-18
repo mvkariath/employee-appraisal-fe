@@ -1,4 +1,5 @@
 "use client";
+
 import {
   Card,
   CardContent,
@@ -18,323 +19,252 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Calendar,
   Users,
-  FileText,
-  Target,
-  Clock,
   CheckCircle2,
-  User,
-  Building2,
-  PlusSquareIcon,
+  Clock,
   PlusIcon,
-  X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import AppraisalCycleModal from "@/components/hr/AppraisalCycleForm";
+import { useGetCyclesQuery, useUpdateCycleMutation } from "@/api-service/appraisalCycle/appraisalCycle.api";
+import { AppraisalCycle } from "@/api-service/appraisalCycle/types";
+import { toast } from "sonner";
+import { formatDate, getProgressColorClass } from "@/components/functions";
 
 const Index = () => {
-  const [activeView, setActiveView] = useState("dashboard");
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const { data, isLoading } = useGetCyclesQuery();
+  const [appraisalCycles, setAppraisalCycles] = useState<AppraisalCycle[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [closeCycleModal, setCloseCycleModal] = useState<{
     open: boolean;
     cycleId: number | null;
   }>({ open: false, cycleId: null });
-  const router = useRouter();
 
-  const [appraisalCycles, setAppraisalCycles] = useState([
-    {
-      id: 1,
-      name: "Q1 2024 Performance Review",
-      startDate: "2024-01-15",
-      endDate: "2024-03-15",
-      status: "Active",
-      employees: 45,
-      completed: 23,
-      progress: 51,
-    },
-    {
-      id: 2,
-      name: "Annual Review 2024",
-      startDate: "2024-04-01",
-      endDate: "2024-06-30",
-      status: "Planning",
-      employees: 120,
-      completed: 0,
-      progress: 70,
-    },
-    {
-      id: 3,
-      name: "Mid-Year Review 2024",
-      startDate: "2024-06-01",
-      endDate: "2024-08-15",
-      status: "Upcoming",
-      employees: 89,
-      completed: 0,
-      progress: 5,
-    },
-  ]);
+  const [updateCycle] = useUpdateCycleMutation();
 
-  const employees = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      department: "Engineering",
-      role: "Senior Developer",
-      cycle: "Q1 2024 Performance Review",
-      status: "Self-Assessment Complete",
-      stage: "Lead Review",
-      progress: 60,
-      lead: "Mike Chen",
-    },
-    {
-      id: 2,
-      name: "David Rodriguez",
-      department: "Marketing",
-      role: "Marketing Specialist",
-      cycle: "Q1 2024 Performance Review",
-      status: "Pending Self-Assessment",
-      stage: "Employee Form",
-      progress: 20,
-      lead: "Lisa Park",
-    },
-    {
-      id: 3,
-      name: "Emily Chen",
-      department: "Design",
-      role: "UX Designer",
-      cycle: "Q1 2024 Performance Review",
-      status: "Meeting Scheduled",
-      stage: "Final Review",
-      progress: 80,
-      lead: "John Smith",
-    },
-  ];
+
+  // Sync fetched data to local state
+  useEffect(() => {
+    if (data) {
+      setAppraisalCycles(data);
+    }
+  }, [data]);
+
+  const handleCloseCycle = (cycleId: number) => {
+    setCloseCycleModal({ open: true, cycleId: cycleId });
+  };
+
+  const confirmCloseCycle = (cycleId: number) => {
+    const payload = {
+      id: cycleId,
+      status: "COMPLETED"
+    };
+
+    updateCycle(payload)
+      .unwrap()
+      .then(() => {
+        toast.success("cycle closed successfully")
+
+      }).catch((error) => {
+        toast.error(error?.data?.message || "Cycle close failed");
+
+      })
+    setCloseCycleModal({ open: false, cycleId: null });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Active":
-        return "bg-green-100 text-green-800";
-      case "Planning":
-        return "bg-blue-100 text-blue-800";
-      case "Upcoming":
-        return "bg-gray-100 text-gray-800";
-      case "Closed":
-        return "bg-red-100 text-red-800";
-      case "Self-Assessment Complete":
-        return "bg-blue-100 text-blue-800";
-      case "Pending Self-Assessment":
+      case "INITIATED":
         return "bg-yellow-100 text-yellow-800";
-      case "Meeting Scheduled":
-        return "bg-purple-100 text-purple-800";
+      case "IN_PROGRESS":
+        return "bg-blue-100 text-blue-800";
+      case "COMPLETED":
+        return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  const handleCloseCycle = (cycleId: number) => {
-    setCloseCycleModal({ open: true, cycleId });
+  const getProgressFromStatus = (status: string): number => {
+    switch (status) {
+      case "INITIATED":
+        return 10;
+      case "IN_PROGRESS":
+        return 50;
+      case "COMPLETED":
+        return 100;
+      default:
+        return 0;
+    }
   };
 
-  const confirmCloseCycle = () => {
-    setAppraisalCycles((prev) =>
-      prev.map((cycle) =>
-        cycle.id === closeCycleModal.cycleId
-          ? { ...cycle, status: "Closed" }
-          : cycle
-      )
-    );
-    setCloseCycleModal({ open: false, cycleId: null });
-  };
-
-  const renderDashboard = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="container mx-auto px-6 py-8">
-          <div className="mb-8 flex justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                Appraisal Management
-              </h1>
-              <p className="text-lg text-gray-600">
-                Streamline your performance review process
-              </p>
-            </div>
-            <Button
-              onClick={() => setIsModalOpen(true)}
-              className="flex items-center"
-            >
-              <PlusIcon />
-              Add Cycle
-            </Button>
-          </div>
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Loading cycles...
+      </div>
+    );
+  }
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-green-100">Total Employees</p>
-                    <p className="text-3xl font-bold">254</p>
-                  </div>
-                  <Users className="h-8 w-8 text-green-200" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-100">Completed Reviews</p>
-                    <p className="text-3xl font-bold">23</p>
-                  </div>
-                  <CheckCircle2 className="h-8 w-8 text-purple-200" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-orange-100">Pending Actions</p>
-                    <p className="text-3xl font-bold">31</p>
-                  </div>
-                  <Clock className="h-8 w-8 text-orange-200" />
-                </div>
-              </CardContent>
-            </Card>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="container mx-auto px-6 py-8">
+        <div className="mb-8 flex justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              Appraisal Management
+            </h1>
+            <p className="text-lg text-gray-600">
+              Streamline your performance review process
+            </p>
           </div>
+          <Button onClick={() => setIsModalOpen(true)} className="flex items-center">
+            <PlusIcon />
+            Add Cycle
+          </Button>
+        </div>
 
-          <div className="grid grid-cols-1  gap-8 mb-8">
-            <div className="grid ">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                Appraisal Cycles
-              </h2>
-              <div className=" grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {appraisalCycles.map((cycle) => (
-                  <Card
-                    key={cycle.id}
-                    className="hover:shadow-lg transition-shadow"
-                  >
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-lg">
-                            {cycle.name}
-                          </CardTitle>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-100">Total Employees</p>
+                  <p className="text-3xl font-bold">254</p>
+                </div>
+                <Users className="h-8 w-8 text-green-200" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-100">Completed Reviews</p>
+                  <p className="text-3xl font-bold">23</p>
+                </div>
+                <CheckCircle2 className="h-8 w-8 text-purple-200" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-100">Pending Actions</p>
+                  <p className="text-3xl font-bold">31</p>
+                </div>
+                <Clock className="h-8 w-8 text-orange-200" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid gap-8 mb-8">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+              Appraisal Cycles
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {appraisalCycles?.map((cycle) => (
+                <Card key={cycle.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{cycle.name}</CardTitle>
+                        <CardDescription>
                           <CardDescription>
-                            {cycle.startDate} - {cycle.endDate}
+                            {formatDate(cycle.start_date)} - {formatDate(cycle.end_date)}
                           </CardDescription>
-                        </div>
-                        <Badge className={getStatusColor(cycle.status)}>
-                          {cycle.status}
-                        </Badge>
+
+                        </CardDescription>
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex justify-between text-sm text-gray-600">
-                          <span>
-                            {cycle.completed} of {cycle.employees} completed
-                          </span>
-                          <span>{cycle.progress}%</span>
-                        </div>
-                        <Progress
-                          value={cycle.progress}
-                          className={`h-2 
-                          ${
-                            cycle.progress <= 20
-                              ? "bg-red-200 [&>div]:bg-red-500"
-                              : cycle.progress <= 40
-                              ? "bg-orange-200 [&>div]:bg-orange-500"
-                              : cycle.progress <= 60
-                              ? "bg-yellow-200 [&>div]:bg-yellow-500"
-                              : cycle.progress <= 80
-                              ? "bg-blue-200 [&>div]:bg-blue-500"
-                              : "bg-green-200 [&>div]:bg-green-500"
-                          }`}
-                        />
+                      <Badge className={getStatusColor(cycle.status)}>
+                        {cycle.status}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <Progress value={getProgressFromStatus(cycle.status)} className={getProgressColorClass(getProgressFromStatus(cycle.status))} />
+                      <div className="flex gap-2 justify-between items-center">
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline">
                             View Details
                           </Button>
-                          {cycle.status === "Active" && (
-                            <>
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  router.push(`appraisal/${cycle.id}`);
-                                }}
-                              >
-                                Manage
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleCloseCycle(cycle.id)}
-                              >
-                                Close Cycle
-                              </Button>
-                            </>
+                          {cycle.status !== "COMPLETED" && (
+                            <Button
+                              size="sm"
+                              onClick={() => router.push(`${pathname}/appraisal/${cycle.id}`)}
+                              variant="default"
+                            >
+                              Manage
+                            </Button>
                           )}
                         </div>
+
+                        {cycle.status !== "COMPLETED" && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleCloseCycle(cycle.id)}
+                          >
+                            Close Cycle
+                          </Button>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </div>
-
-        <AppraisalCycleModal
-          open={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          onSave={() => console.log("Save Cycle")}
-        />
-
-        <Dialog
-          open={closeCycleModal.open}
-          onOpenChange={(open) => setCloseCycleModal({ open, cycleId: null })}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Close Appraisal Cycle</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to close this appraisal cycle? This action
-                cannot be undone and the cycle will no longer be manageable.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setCloseCycleModal({ open: false, cycleId: null })
-                }
-              >
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={confirmCloseCycle}>
-                Close Cycle
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
-    );
-  };
 
-  const renderActiveView = () => {
-    switch (activeView) {
-      default:
-        return renderDashboard();
-    }
-  };
+      <AppraisalCycleModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onSave={() => console.log("Save Cycle")}
+      />
 
-  return renderDashboard();
+      <Dialog
+        open={closeCycleModal.open}
+        onOpenChange={(open) => setCloseCycleModal({ open, cycleId: closeCycleModal.cycleId })}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Close Appraisal Cycle</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to close this appraisal cycle? This action
+              cannot be undone and the cycle will no longer be manageable.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCloseCycleModal({ open: false, cycleId: null })}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => confirmCloseCycle(closeCycleModal.cycleId!)}
+            >
+              Close Cycle
+            </Button>
+
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 };
 
 export default Index;

@@ -31,7 +31,7 @@ interface Employee {
   role: string;
 }
 
-const token = localStorage.getItem("token")
+const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 const useDetails = token?JSON.parse(token):null
 
 interface AppraisalCycleModalProps {
