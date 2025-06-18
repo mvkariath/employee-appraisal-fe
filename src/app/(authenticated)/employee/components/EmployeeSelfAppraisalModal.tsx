@@ -921,7 +921,7 @@ export default function EmployeeSelfAppraisalModal({
         )}
         <div>
         {/* Floating Chatbot Button */}
-        {!showChat && (
+        {/* {!showChat && (
           <Button
             className="fixed bottom-10 right-10 z-50 rounded-full shadow-lg h-12 w-12 p-0 flex items-center justify-center"
             onClick={() => setShowChat(true)}
@@ -931,10 +931,10 @@ export default function EmployeeSelfAppraisalModal({
           >
             <MessageCircle className="h-6 w-6" />
           </Button>
-        )}
+        )} */}
 
         {/* Chatbot Panel inside Modal */}
-        {showChat && (
+        {/* {showChat && (
           <div className="fixed bottom-24 right-10 z-50 w-80">
             <ChatBot />
             <Button
@@ -946,7 +946,7 @@ export default function EmployeeSelfAppraisalModal({
               <X></X>
             </Button>
           </div>
-        )}
+        )} */}
       </div>
       </DialogContent>
       
