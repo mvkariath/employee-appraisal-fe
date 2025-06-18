@@ -40,6 +40,8 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import IdpModal from "./components/IDPForm";
+import { set } from "date-fns";
 
 const Index = () => {
   const [displayMode, setDisplayMode] = useState<"card" | "table">("card");
@@ -348,7 +350,7 @@ const Index = () => {
                         onClick={() => handleConductMeeting(employee)}
                       >
                         <Video className="h-4 w-4 mr-1" />
-                        Conduct Meeting
+                        Conduct Meeting -2s
                       </Button>
                     )}
                   </div>
@@ -460,7 +462,7 @@ const Index = () => {
                         onClick={() => handleConductMeeting(employee)}
                       >
                         <Video className="h-4 w-4 mr-1" />
-                        Conduct Meeting
+                        Conduct Meeting -1
                       </Button>
                     )}
                   </div>
@@ -499,49 +501,6 @@ const Index = () => {
             className="bg-green-600 hover:bg-green-700"
           >
             Yes, Push to Lead
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-
-  const IdpModal = () => (
-    <Dialog open={isIdpModalOpen} onOpenChange={setIsIdpModalOpen}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            Individual Development Plan - {currentIdpEmployee?.name}
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setIsViewForm(true)}
-            >
-              <FileText className="h-4 w-4 mr-1" />
-              View Form
-            </Button>
-          </DialogTitle>
-        </DialogHeader>
-        <div className="text-center py-12">
-          <div className="text-gray-500 mb-4">
-            <FileText className="h-16 w-16 mx-auto" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            IDP Form Component
-          </h3>
-          <p className="text-gray-600">
-            This will be replaced with the IDP form component once the
-            contributor's branch is merged.
-          </p>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsIdpModalOpen(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() => setShowConfirmClose(true)}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            Close Meeting
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -616,7 +575,13 @@ const Index = () => {
           appraisal={currentIdpEmployee}
         />
       )}
-      <IdpModal />
+      {isIdpModalOpen && currentIdpEmployee && (
+        <IdpModal
+          isOpen={isIdpModalOpen}
+          onClose={() => setIsIdpModalOpen(false)}
+          appraisalId={currentIdpEmployee.appraisalId}
+        />
+      )}
       <PushToLeadConfirmModal />
       <CloseMeetingConfirmModal />
     </Card>
