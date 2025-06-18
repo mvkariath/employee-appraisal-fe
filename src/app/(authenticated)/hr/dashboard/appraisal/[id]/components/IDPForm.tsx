@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { useGetAppraisalByIdQuery } from "@/api-service/appraisal/appraisal.api";
+import { useGetAppraisalByIdQuery, useUpdateAppraisalMutation } from "@/api-service/appraisal/appraisal.api";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface IDPItem {
@@ -46,6 +46,8 @@ const IdpModal = ({ isOpen, onClose, appraisalId }: IdpModalProps) => {
   const [editMode, setEditMode] = useState(false);
   const [editedData, setEditedData] = useState<IDPItem[]>([]);
 
+  const [updateAppraisal] = useUpdateAppraisalMutation();
+
   useEffect(() => {
     if (appraisalData?.idp) {
       setEditedData(appraisalData.idp);
@@ -63,8 +65,19 @@ const IdpModal = ({ isOpen, onClose, appraisalId }: IdpModalProps) => {
   };
 
   const handleSave = () => {
-    console.log("IDP Data to submit:", editedData);
-    toast.success("IDP changes saved (check console)");
+    console.log(`IDP Data to submit:, ${editedData} and apprId: ${appraisalId}`);
+    const id = parseInt(appraisalId as string, 10)
+
+    updateAppraisal({ id, data: { idp: editedData } })
+      .unwrap()
+      .then(() => {
+        console.log("success")
+        toast.success("IDP updated successfully");
+      })
+      .catch((error) => {
+        toast.error(error?.data?.message || "IDP update failed");
+      });
+    // toast.success("IDP changes saved (check console)");
     setEditMode(false);
   };
 

@@ -8,18 +8,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Appraisal } from "@/types";
+import { Appraisal, Employee } from "@/types";
 import { X } from "lucide-react";
 import { Loader2 } from "lucide-react"; // Optional: for spinner icon
 
 interface EmployeeFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  appraisal: Appraisal | null;
-}
+  appraisal: Employee & { appraisalId: string } | null;
+};
+
 
 const EmployeeForm = ({ open, onOpenChange, appraisal }: EmployeeFormProps) => {
-  const { data, isLoading } = useGetAppraisalByIdQuery(appraisal.appraisalId);
+  console.log("appraisla",appraisal)
+  const { data, isLoading } = useGetAppraisalByIdQuery(appraisal?.appraisalId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

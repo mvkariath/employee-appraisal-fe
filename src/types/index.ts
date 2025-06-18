@@ -14,6 +14,13 @@ export interface Employee {
   status: string;
 }
 
+export interface Appraisal {
+    employeeIds: number[],
+        cycle:{id:number},
+        content:string,
+        remarks_by:string,
+        current_status:string,
+}
 
 // export interface EmployeeAppraisal{
   

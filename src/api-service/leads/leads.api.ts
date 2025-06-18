@@ -3,13 +3,14 @@ import baseApi from "../api";
 import { AppraisalLeadView, EmployeeData, PastAppraisal } from "./types";
 
 export const leadsApi = baseApi.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
-    getLeads: builder.query<EmployeeData[],void>({
+    getLeads: builder.query<EmployeeData[], void>({
       query: () => `/self-appraisal/get-appraisals-of-lead/`,
-      providesTags:['LEADS']
+      providesTags: ['LEADS']
     }),
-    getAppraisalById: builder.query<AppraisalLeadView,{id: number}> ({
-      query: ({id}) => ({
+    getAppraisalById: builder.query<AppraisalLeadView, { id: number }>({
+      query: ({ id }) => ({
         url: `/appraisal/${id}`
       })
     }),
@@ -35,14 +36,14 @@ export const leadsApi = baseApi.injectEndpoints({
     //     }),
     //     invalidatesTags: ['EMPLOYEES']
     // }),
-   updatePerformanceFactor: builder.mutation({
-  query: ({ id, ...body }) => ({
-    url: `/appraisal/${id}`,
-    method: 'PUT',
-    body:body, // contains everything except id
-  }),
-  invalidatesTags: ['LEADS'],
-}),
+    updatePerformanceFactor: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/appraisal/${id}`,
+        method: 'PUT',
+        body: body, // contains everything except id
+      }),
+      invalidatesTags: ['LEADS'],
+    }),
   }),
 });
 

@@ -47,11 +47,11 @@ const Index = () => {
   const [displayMode, setDisplayMode] = useState<"card" | "table">("card");
   const [isViewForm, setIsViewForm] = useState(false);
   const [isIdpModalOpen, setIsIdpModalOpen] = useState(false);
-  const [currentIdpEmployee, setCurrentIdpEmployee] = useState<Employee>();
+  const [currentIdpEmployee, setCurrentIdpEmployee] = useState<Employee & { appraisalId: string }>();
   const [showConfirmClose, setShowConfirmClose] = useState(false);
   const [showConfirmPushToLead, setShowConfirmPushToLead] = useState(false);
-  const [currentPushEmployee, setCurrentPushEmployee] = useState<Employee>();
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [currentPushEmployee, setCurrentPushEmployee] = useState<Employee & { appraisalId: string }>();
+  const [employees, setEmployees] = useState<(Employee & { appraisalId: string })[]>([]);
 
   const params = useParams();
   const id = params.id;
@@ -146,7 +146,7 @@ const Index = () => {
     }
   };
 
-  const handlePushToLead = (employee: Employee) => {
+  const handlePushToLead = (employee: Employee & { appraisalId: string }) => {
     setCurrentPushEmployee(employee);
     setShowConfirmPushToLead(true);
   };
@@ -170,7 +170,7 @@ const Index = () => {
     setCurrentPushEmployee(undefined);
   };
 
-  const handleConductMeeting = (employee: Employee) => {
+  const handleConductMeeting = (employee: Employee & { appraisalId: string }) => {
     setCurrentIdpEmployee(employee);
     setIsIdpModalOpen(true);
   };
@@ -350,7 +350,7 @@ const Index = () => {
                         onClick={() => handleConductMeeting(employee)}
                       >
                         <Video className="h-4 w-4 mr-1" />
-                        Conduct Meeting -2s
+                        Conduct Meeting
                       </Button>
                     )}
                   </div>
@@ -462,7 +462,7 @@ const Index = () => {
                         onClick={() => handleConductMeeting(employee)}
                       >
                         <Video className="h-4 w-4 mr-1" />
-                        Conduct Meeting -1
+                        Conduct Meeting
                       </Button>
                     )}
                   </div>
@@ -485,7 +485,7 @@ const Index = () => {
           <DialogDescription>
             Are you sure you want to push {currentPushEmployee?.name}'s review
             to their lead{" "}
-            <span className="font-semibold">{currentPushEmployee?.lead}</span>?
+            {/* <span className="font-semibold">{currentPushEmployee?.lead}</span>? */}
             This will advance their review to the next stage.
           </DialogDescription>
         </DialogHeader>

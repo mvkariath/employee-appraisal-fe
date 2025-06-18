@@ -2,6 +2,7 @@ import { Appraisal, Employee } from "@/types";
 import baseApi from "../api";
 
 export const appraisalApi = baseApi.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     getAppraisals: builder.query({
       query: () => "/appraisal",
