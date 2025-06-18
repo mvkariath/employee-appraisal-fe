@@ -19,8 +19,8 @@ const statusColor = {
 
 export const EmployeeAppraisalsTable = ({ appraisals}  :{ appraisals:EmployeeData[]|undefined}) => {
   const router=useRouter();
-   const handleViewAppraisal = (employeeId:number) => {
-    router.push(`/leads/appraisal/${employeeId}`)
+   const handleViewAppraisal = (appraisalId:number) => {
+    router.push(`/leads/appraisal/${appraisalId}`)
   }
 
   return (
@@ -59,7 +59,7 @@ export const EmployeeAppraisalsTable = ({ appraisals}  :{ appraisals:EmployeeDat
                   </div>
                 </TableCell> */}
                 <TableCell>
-                  <Button size="sm" onClick={() => handleViewAppraisal(appraisal.appraisal_id)}>
+                  <Button size="sm" onClick={() => handleViewAppraisal(appraisal.appraisalId)}>
                     View
                   </Button>
                 </TableCell>

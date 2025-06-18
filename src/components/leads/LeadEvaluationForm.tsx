@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { PastAppraisalsModal } from "./PastAppraisalsModal";
 import { PastAppraisalSummary } from "@/types";
+import { PerformanceFactor } from "@/api-service/leads/types";
+import { Input } from "../ui/input";
 
 const competencies = [
   "Technical",
@@ -24,7 +26,7 @@ const competencies = [
 ];
 
 interface LeadEvaluationFormProps {
-  evaluations:any,
+  evaluations:PerformanceFactor[],
   onChange:(index,field,value)=>void
   // isPastAppraisalsOpen: boolean;
   // setIsPastAppraisalsOpen: (open: boolean) => void;
@@ -37,7 +39,7 @@ export const LeadEvaluationForm = ({
   // isPastAppraisalsOpen,
   // setIsPastAppraisalsOpen,
 }: LeadEvaluationFormProps) => {
-  
+  console.log("Evaluations in LeadEvaluationForm:", evaluations);
   return (
     <>
       <Card>
@@ -67,43 +69,42 @@ export const LeadEvaluationForm = ({
               ))}
             </TableBody> */}
             <TableBody>
-            {evaluations.map((item, index) => (
-              <TableRow key={item.competency}>
-                <TableCell className="font-medium">{item.competency}</TableCell>
-                <TableCell>
-                  <Textarea
-                    id={`strengths-${item.competency}`}
-                    value={item.strengths}
-                    onChange={(e) =>
-                      onChange(index, "strengths", e.target.value)
-                    }
-                  />
-                </TableCell>
-                <TableCell>
-                  <Textarea
-                    id={`improvements-${item.competency}`}
-                    value={item.improvements}
-                    onChange={(e) =>
-                      onChange(index, "improvements", e.target.value)
-                    }
-                  />
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-4">
-                    <Slider
-                      id={`rating-${item.competency}`}
-                      min={1}
-                      max={10}
-                      step={1}
-                      value={[item.rating]}
-                      onValueChange={(value) =>
-                        onChange(index, "rating", value[0])
-                      }
-                    />
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {evaluations?.map((item, index) => (
+  <TableRow key={item.competency}>
+    <TableCell className="font-medium">{item.competency}</TableCell>
+    <TableCell>
+      <Textarea
+        id={`strengths-${item.competency}`}
+        value={item.strengths ?? ""}
+        onChange={(e) =>
+          onChange(index, "strengths", e.target.value)
+        }
+      />
+    </TableCell>
+    <TableCell>
+      <Textarea
+        id={`improvements-${item.competency}`}
+        value={item.improvements ?? ""}
+        onChange={(e) =>
+          onChange(index, "improvements", e.target.value)
+        }
+      />
+    </TableCell>
+        <TableCell>
+        <Input
+        type="number"
+        id={`rating-${item.competency}`}
+        value={item.rating ?? 0}
+        min={0}
+        max={10}
+        className="w-20"
+        onChange={(e) =>
+          onChange(index, "rating", parseInt(e.target.value, 10) || 0)
+        }
+      />
+    </TableCell>
+  </TableRow>
+))}
           </TableBody>
           </Table>
 

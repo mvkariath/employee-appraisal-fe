@@ -4,16 +4,21 @@ import { EmployeeDetailsView } from "@/components/leads/EmployeeDetailsView";
 import IndividualDevelopmentPlan from "@/components/leads/IndividualDevelopmentPlan";
 import { LeadEvaluationForm } from "@/components/leads/LeadEvaluationForm";
 import { SelfAppraisalView } from "@/components/leads/SelfAppraisalView";
-import { Appraisal, Employee, PastAppraisalSummary } from "@/types";
-import { useParams } from "next/navigation";
+
+import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PastAppraisalsModal } from "@/components/leads/PastAppraisalsModal";
-import { use, useState } from "react";
+
+import { use, useEffect, useState } from "react";
 import { produce } from "immer";
-import { useGetAppraisalByIdQuery } from "@/api-service/leads/leads.api";
+import { useGetAppraisalByIdQuery, useGetPastAppraisalByEmployeeIdQuery } from "@/api-service/leads/leads.api";
 import { useGetEmployeeByIdQuery } from "@/api-service/employees/employee.api";
 import { useUpdatePerformanceFactorMutation } from "@/api-service/leads/leads.api";
+import { PerformanceFactor } from "@/api-service/leads/types";
+import { Dialog, DialogTitle } from "@radix-ui/react-dialog";
+import { DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { Table,TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import {  Link } from "lucide-react";
 const AppraisalPage = () => {
   const params = useParams();
   const id = params.appraisald as string;
@@ -36,24 +41,28 @@ const AppraisalPage = () => {
     "TEAMWORK",
     "MANAGING PROCESSES & WORK",
   ];
-  const performance_factors =
-    data?.performance_factors ||
-    competencies.map((c) => ({
-      competency: c,
-      strengths: "",
-      improvements: "",
-      rating: 5,
-    }));
+  const performance_factors =data?.performance_factors;
+  const [isPastAppraisalsOpen, setIsPastAppraisalsOpen] = useState(false);
+ const {data:pastAppraisals,isLoading:isLoadingPast} =useGetPastAppraisalByEmployeeIdQuery({ id: data?.employee.id });
 
-  const [evaluations, setEvaluations] = useState(() =>
-    performance_factors.map(({ id, ...rest }) => rest)
-  );
+
+  const [evaluations, setEvaluations] = useState([]);
+
+// Update evaluations when performance_factors are fetched
+useEffect(() => {
+  if (performance_factors && performance_factors.length > 0) {
+    // Exclude IDs if needed
+    
+    setEvaluations(performance_factors);
+  }
+}, [performance_factors]);
 
   //   const handleChange = (index: number, field: string, value: any) => {
   //     const updated = [...evaluations]
   //     updated[index][field] = value
   //     setEvaluations(updated)
   //   }
+  const router=useRouter();
   const [createPerformanceFactor, { isLoading: isUpdating }] =
     useUpdatePerformanceFactorMutation();
   const handleSubmitPerformanceFactor = async () => {
@@ -74,13 +83,16 @@ const AppraisalPage = () => {
       });
   };
 
-  const handleChange = (index: number, field: string, value: any) => {
-    setEvaluations((prev) =>
-      produce(prev, (draft) => {
-        draft[index][field] = value;
-      })
-    );
-  };
+const handleChange = (index: number, field: keyof PerformanceFactor, value: string | number) => {
+  setEvaluations((prev) => {
+    const updated = [...prev];
+    updated[index] = {
+      ...updated[index],
+      [field]: value,
+    };
+    return updated;
+  });
+};
   if (isLoadingAppraisal || isLoadingEmployee) {
     return <div>Loading...</div>;
   }
@@ -128,12 +140,50 @@ const AppraisalPage = () => {
         <Card>
           <CardContent>
             <div className="flex justify-between items-center mt-2">
-              {/* <Button
+              <Button
               variant="outline"
               onClick={() => setIsPastAppraisalsOpen(true)}
             >
               View Past Appraisals
-            </Button> */}
+            </Button>
+             <Dialog open={isPastAppraisalsOpen} onOpenChange={setIsPastAppraisalsOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Past Appraisals</DialogTitle>
+          </DialogHeader>
+          {pastAppraisals ?<Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cycle Name</TableHead>
+                  <TableHead>Start Date</TableHead>
+                  <TableHead>End Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pastAppraisals?.map((appraisal) => (
+                  <TableRow key={appraisal.id}>
+                    <TableCell>{appraisal.cycle_name}</TableCell>
+                    <TableCell>{appraisal.startDate}</TableCell>
+                    <TableCell>{appraisal.endDate}</TableCell>
+                    <TableCell>{appraisal.current_status}</TableCell>
+                    <TableCell>
+                   <Button
+              variant="outline"
+              onClick={() => {
+                router.push(`/leads/view-completed-appraisal/${appraisal.id}`);
+              }}
+            >
+              View Past Appraisals
+            </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table> : <div className="text-gray-500">No past appraisals found.</div>}
+        </DialogContent>
+      </Dialog>
 
               <div className="flex space-x-2">
                 <Button variant="outline">Save as Draft</Button>

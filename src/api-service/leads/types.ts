@@ -1,12 +1,24 @@
 export interface EmployeeData {
-  appraisal_id: number;
-  employeeId: number;
-  employeeEmail: string;
+  appraisalId: number;
+ 
+ 
   name: string;
   department: string;
   cycleName: string;
   startDate: Date;
   endDate: Date;
+}
+ export interface PastAppraisal {
+  id: number;
+  cycle_name: string;
+  employee_name: string;
+  startDate: string; // or Date
+  endDate: string;   // or Date
+  current_status: "COMPLETED" | "PENDING" | "IN_PROGRESS" | string;
+
+  idp: any[];                    // Replace `any` with a specific type if known
+  performance_factors: any[];   // Replace `any` with a specific type if known
+  self_appraisals: any[];       // Replace `any` with a specific type if known
 }
 export interface AppraisalLeadView {
   id: number;

@@ -1,6 +1,6 @@
 
 import baseApi from "../api";
-import { AppraisalLeadView, EmployeeData } from "./types";
+import { AppraisalLeadView, EmployeeData, PastAppraisal } from "./types";
 
 export const leadsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -11,6 +11,12 @@ export const leadsApi = baseApi.injectEndpoints({
     getAppraisalById: builder.query<AppraisalLeadView,{id: number}> ({
       query: ({id}) => ({
         url: `/appraisal/${id}`
+      })
+    }),
+        getPastAppraisalByEmployeeId: builder.query<PastAppraisal[],{id: number}> ({
+      query: ({id}) => ({
+        url: `/appraisal/past-appraisals/${id}`,
+        method: 'GET'
       })
     }),
 
@@ -40,4 +46,4 @@ export const leadsApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useGetAppraisalByIdQuery,useGetLeadsQuery ,useUpdatePerformanceFactorMutation} = leadsApi;
+export const { useGetAppraisalByIdQuery,useGetLeadsQuery ,useUpdatePerformanceFactorMutation,useGetPastAppraisalByEmployeeIdQuery} = leadsApi;

@@ -11,7 +11,7 @@ import { Grid, LayoutGrid, List ,TableIcon} from "lucide-react"
 import clsx from "clsx"
 import { useRouter } from "next/navigation"
 import { EmployeeAppraisalsTable } from "@/components/leads/EmployeeAppraisalsTable"
-import { EmployeeAppraisal } from "@/types"
+
 import { useGetLeadsQuery } from "@/api-service/leads/leads.api"
 
 // const mockAppraisals:EmployeeAppraisal[] = [
@@ -25,11 +25,15 @@ export default function AppraisalsPage() {
   const [view, setView] = useState<"card" | "table">("card")
   const router = useRouter()
 
-  const handleViewAppraisal = (employeeId: string) => {
-    router.push(`/leads/appraisal/${employeeId}`)
-  }
+
   const {data, isLoading} = useGetLeadsQuery()
- console.log(data)
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="loader"> Loading</div>
+      </div>
+    )
+  }
   return (
    
     <div className="container mx-auto py-8 px-6 space-y-6">
@@ -62,7 +66,7 @@ export default function AppraisalsPage() {
       {!isLoading && (view === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {data?.map((appraisal) => (
-            <EmployeeAppraisalCard key={appraisal.employeeId} appraisal={appraisal} />
+            <EmployeeAppraisalCard key={appraisal.id} appraisal={appraisal} />
           ))}
         </div>
       ) : (

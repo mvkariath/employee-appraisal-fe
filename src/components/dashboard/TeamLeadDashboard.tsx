@@ -54,7 +54,7 @@ const TeamLeadDashboard = () => {
   ];
 
 const pendingAppraisals = data?.slice().sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime()).slice(0, 3); // take top 3
-
+console.log("Pending Appraisals:", pendingAppraisals);
   const scheduledMeetings = [
     {
       employeeName: "Jane Doe",
@@ -131,14 +131,14 @@ const pendingAppraisals = data?.slice().sort((a, b) => new Date(a.endDate).getTi
               <div className="space-y-4">
                 {pendingAppraisals?.map((appraisal) => (
                   <EmployeeAppraisalCard
-                    key={appraisal.employeeId}
+                    key={appraisal.appraisalId}
                     appraisal={appraisal}
                   />
                 ))}
               </div>
             </div>
 
-            {/* Completed Appraisals */}
+            Completed Appraisals
             <div className="mb-8">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Completed Appraisals</h2>
@@ -148,14 +148,14 @@ const pendingAppraisals = data?.slice().sort((a, b) => new Date(a.endDate).getTi
               </div>
               <div className="space-y-4">
                 {pastAppraisals.map((appraisal) => (
-                  <Card key={appraisal.employeeId}>
+                  <Card key={appraisal.appraisalId}>
                     <CardContent className="p-4 flex items-center justify-between">
                       <div>
                         <p className="font-semibold">
-                          {appraisal.employeeName}
+                          {appraisal.name}
                         </p>
                         <p className="text-sm text-gray-500">
-                          Due: {appraisal.dueDate}
+                          Due: {appraisal.endDate}
                         </p>
                       </div>
                       <div className="flex items-center gap-4">

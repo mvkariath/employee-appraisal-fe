@@ -14,7 +14,7 @@ export const EmployeeAppraisalCard = ({ appraisal }: EmployeeAppraisalCardProps)
   const router = useRouter()
 
   const handleViewAppraisal = () => {
-    router.push(`/leads/appraisal/${appraisal?.employeeId}`)
+    router.push(`/leads/appraisal/${appraisal.appraisalId}`)
   }
 
   function moment(endDate: Date) {
