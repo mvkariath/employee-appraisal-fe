@@ -89,7 +89,7 @@ const PerformanceFactorsTable: React.FC<{
   onRemind?: () => void;
 }> = ({ factors, onRemind }) => {
   if (!factors?.length) {
-    return <EmptyState onRemind={onRemind || (() => {})} />;
+    return <EmptyState onRemind={onRemind || (() => { })} />;
   }
 
   return (
@@ -135,17 +135,16 @@ const PerformanceFactorsTable: React.FC<{
                 <div className="flex items-center gap-2 min-w-[120px]">
                   <Progress
                     value={pf.rating * 20}
-                    className={`w-28 h-2 rounded-full shadow-inner ${
-                      pf.rating <= 1
-                        ? "bg-red-200 [&>div]:bg-red-500"
-                        : pf.rating <= 2
+                    className={`w-28 h-2 rounded-full shadow-inner ${pf.rating <= 1
+                      ? "bg-red-200 [&>div]:bg-red-500"
+                      : pf.rating <= 2
                         ? "bg-orange-200 [&>div]:bg-orange-500"
                         : pf.rating <= 3
-                        ? "bg-yellow-200 [&>div]:bg-yellow-500"
-                        : pf.rating <= 4
-                        ? "bg-blue-200 [&>div]:bg-blue-500"
-                        : "bg-green-200 [&>div]:bg-green-500"
-                    }`}
+                          ? "bg-yellow-200 [&>div]:bg-yellow-500"
+                          : pf.rating <= 4
+                            ? "bg-blue-200 [&>div]:bg-blue-500"
+                            : "bg-green-200 [&>div]:bg-green-500"
+                      }`}
                   />
                   <span className="text-sm font-medium text-gray-800">
                     {pf.rating}/5
@@ -165,7 +164,7 @@ const IDPTable: React.FC<{ idp: IDPData; onRemind?: () => void }> = ({
   onRemind,
 }) => {
   if (!idp?.length) {
-    return <EmptyState onRemind={onRemind || (() => {})} />;
+    return <EmptyState onRemind={onRemind || (() => { })} />;
   }
 
   return (
@@ -217,8 +216,9 @@ const AppraisalDetailsView: React.FC<AppraisalDetailsViewProps> = ({
     onRemindUser?.();
   };
 
-  const currentSelfAppraisal = selfAppraisal?.[0];
+  const currentSelfAppraisal = selfAppraisal || [];
   const showReminderButton = viewingAs === "HR" || viewingAs === "LEAD";
+
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8 w-full px-4 sm:px-0 mx-auto ">
@@ -241,61 +241,54 @@ const AppraisalDetailsView: React.FC<AppraisalDetailsViewProps> = ({
           )}
         </CardHeader>
         <CardContent>
-          {currentSelfAppraisal ? (
+          {Array.isArray(currentSelfAppraisal) && currentSelfAppraisal.length > 0 ? (
             <div className="overflow-x-auto">
               <Table className="border rounded-lg">
                 <TableHeader>
                   <TableRow className="bg-blue-50">
-                    <TableHead className="text-base font-semibold text-blue-800 border-r">
-                      Delivery Details
-                    </TableHead>
-                    <TableHead className="text-base font-semibold text-blue-800 border-r">
-                      Accomplishments
-                    </TableHead>
-                    <TableHead className="text-base font-semibold text-blue-800 border-r">
-                      Approach
-                    </TableHead>
-                    <TableHead className="text-base font-semibold text-blue-800 border-r">
-                      Improvements
-                    </TableHead>
-                    <TableHead className="text-base font-semibold text-blue-800">
-                      Time Frame
-                    </TableHead>
+                    <TableHead className="text-base font-semibold text-blue-800 border-r">Delivery Details</TableHead>
+                    <TableHead className="text-base font-semibold text-blue-800 border-r">Accomplishments</TableHead>
+                    <TableHead className="text-base font-semibold text-blue-800 border-r">Approach</TableHead>
+                    <TableHead className="text-base font-semibold text-blue-800 border-r">Improvements</TableHead>
+                    <TableHead className="text-base font-semibold text-blue-800">Time Frame</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <TableRow className="hover:bg-gray-50">
-                    <TableCell className="whitespace-pre-line text-sm text-gray-700 border-r align-top min-w-[200px]">
-                      {currentSelfAppraisal.delivery_details}
-                    </TableCell>
-                    <TableCell className="whitespace-pre-line text-sm text-gray-700 border-r align-top min-w-[200px]">
-                      {currentSelfAppraisal.accomplishments}
-                    </TableCell>
-                    <TableCell className="whitespace-pre-line text-sm text-gray-700 border-r align-top min-w-[200px]">
-                      {currentSelfAppraisal.approach_solution}
-                    </TableCell>
-                    <TableCell className="whitespace-pre-line text-sm text-gray-700 border-r align-top min-w-[200px]">
-                      {currentSelfAppraisal.improvement_possibilities}
-                    </TableCell>
-                    <TableCell className="whitespace-pre-line text-sm text-gray-700 align-top min-w-[150px]">
-                      {currentSelfAppraisal.project_time_frame}
-                      {currentSelfAppraisal.leads?.length ? (
-                        <div className="mt-2">
-                          <strong>Project Leads:</strong>
-                          <br />
-                          {currentSelfAppraisal.leads
-                            .map((lead) => lead.name)
-                            .join(", ")}
-                        </div>
-                      ) : null}
-                    </TableCell>
-                  </TableRow>
+                  {currentSelfAppraisal.map((entry, idx) => (
+                    <TableRow key={idx} className="hover:bg-gray-50">
+                      <TableCell className="whitespace-pre-line text-sm text-gray-700 border-r align-top min-w-[200px]">
+                        {entry.delivery_details}
+                      </TableCell>
+                      <TableCell className="whitespace-pre-line text-sm text-gray-700 border-r align-top min-w-[200px]">
+                        {entry.accomplishments}
+                      </TableCell>
+                      <TableCell className="whitespace-pre-line text-sm text-gray-700 border-r align-top min-w-[200px]">
+                        {entry.approach_solution}
+                      </TableCell>
+                      <TableCell className="whitespace-pre-line text-sm text-gray-700 border-r align-top min-w-[200px]">
+                        {entry.improvement_possibilities}
+                      </TableCell>
+                      <TableCell className="whitespace-pre-line text-sm text-gray-700 align-top min-w-[150px]">
+                        {entry.project_time_frame}
+                      </TableCell>
+                    </TableRow>
+
+                  ))}
+                  {/* {currentSelfAppraisal.leads?.length > 0 && (
+                    <TableRow className="bg-gray-50">
+                      <TableCell colSpan={5} className="text-sm text-gray-600 italic px-4 py-2">
+                        <strong className="text-gray-700 font-medium">Project Leads:</strong>{" "}
+                        {currentSelfAppraisal.leads.map((lead) => lead.name).join(", ")}
+                      </TableCell>
+                    </TableRow>
+                  )} */}
                 </TableBody>
               </Table>
             </div>
           ) : (
             <EmptyState onRemind={handleRemindUser} />
           )}
+
         </CardContent>
       </Card>
 
