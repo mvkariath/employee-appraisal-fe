@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { EmployeeAppraisalCard } from  "@/components/leads/EmployeeAppraisalCard"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation"
 import { EmployeeAppraisalsTable } from "@/components/leads/EmployeeAppraisalsTable"
 
 import { useGetLeadsQuery } from "@/api-service/leads/leads.api"
+import { EmployeeData } from "@/api-service/leads/types"
 
 // const mockAppraisals:EmployeeAppraisal[] = [
 //   { employeeId: "1", employeeName: "Alice Johnson", dueDate: "2025-07-01", progress: 80, status: "completed" },
@@ -24,9 +25,26 @@ import { useGetLeadsQuery } from "@/api-service/leads/leads.api"
 export default function AppraisalsPage() {
   const [view, setView] = useState<"card" | "table">("card")
   const router = useRouter()
+ const [userId, setUserId] = useState<number| null>(null);
+  const [pendingAppraisals,setPendingAppraisals] = useState<EmployeeData[]>([]);
+   useEffect(() => {
+     const token = localStorage.getItem("token");
+     if (token) {
+       try {
+         const parsed = JSON.parse(token);
+         setUserId(parsed.id); // assuming token is a JSON string with `id`
+       } catch (e) {
+         console.error("Invalid token in localStorage:", e);
+       }
+     }
+   }, []);
 
-
-  const {data, isLoading} = useGetLeadsQuery()
+  const {data, isLoading} = useGetLeadsQuery({id:userId})
+  useEffect(()=>{
+    if(data && data.length>0){
+      setPendingAppraisals(data)
+    }
+  })
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -65,12 +83,12 @@ export default function AppraisalsPage() {
     
       {!isLoading && (view === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data?.map((appraisal) => (
+          {pendingAppraisals?.map((appraisal) => (
             <EmployeeAppraisalCard key={appraisal.id} appraisal={appraisal} />
           ))}
         </div>
       ) : (
-        <EmployeeAppraisalsTable appraisals={data} />
+        <EmployeeAppraisalsTable appraisals={pendingAppraisals} />
       ))}
       </div>
    

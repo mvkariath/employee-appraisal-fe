@@ -11,6 +11,7 @@ export const appraisalApi = baseApi.injectEndpoints({
 
     getAppraisalById: builder.query({
       query: (id) => `/appraisal/${id}`,
+      
     }),
 
     getAppraisalsByCycleId: builder.query({

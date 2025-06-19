@@ -20,6 +20,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useGetLeadsQuery } from "@/api-service/leads/leads.api";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { EmployeeData } from "@/api-service/leads/types";
 
 const TeamLeadDashboard = () => {
   // Mock data - replace with actual data from your API
@@ -28,7 +30,27 @@ const TeamLeadDashboard = () => {
   const totalAppraisals = 12;
   const pendingAppraisalsCount = 5;
   const completedAppraisals = 7;
- const {data, isLoading} = useGetLeadsQuery()
+  const [userId, setUserId] = useState<number| null>(null);
+ const [pendingAppraisals,setPendingAppraisals] = useState<EmployeeData[]>([]);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const parsed = JSON.parse(token);
+        setUserId(parsed.id); // assuming token is a JSON string with `id`
+      } catch (e) {
+        console.error("Invalid token in localStorage:", e);
+      }
+    }
+  }, []);
+
+  const { data, isLoading, error } = useGetLeadsQuery({id:userId})
+  //    {
+  //   // skip: !userId, // <-- Skip until userId is ready
+  // });
+
+ 
+ console.log("Data is ",data)
   const pastAppraisals: EmployeeAppraisalCardProps["appraisal"][] = [
     {
       employeeId: "4",
@@ -52,8 +74,14 @@ const TeamLeadDashboard = () => {
       status: "completed",
     },
   ];
+ 
+useEffect(()=>{
+  if( data && data.length>0){
+setPendingAppraisals(data.slice().sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime()).slice(0, 3)); 
+  }
 
-const pendingAppraisals = data?.slice().sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime()).slice(0, 3); // take top 3
+},[data])
+
 console.log("Pending Appraisals:", pendingAppraisals);
   const scheduledMeetings = [
     {
@@ -65,7 +93,9 @@ console.log("Pending Appraisals:", pendingAppraisals);
       date: "2024-07-02 at 2:00 PM",
     },
   ];
-
+ if (!userId) return <div>Loading user...</div>;
+  if (isLoading) return <div>Loading leads...</div>;
+  if (error) return <div>Error fetching leads</div>;
   return (
     <div className="bg-gray-50/50 min-h-screen p-8">
       <div className="max-w-7xl mx-auto">

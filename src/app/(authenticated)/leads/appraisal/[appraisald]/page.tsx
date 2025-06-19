@@ -55,7 +55,7 @@ useEffect(() => {
     
     setEvaluations(performance_factors);
   }
-}, [performance_factors]);
+}, [performance_factors,data]);
 
   //   const handleChange = (index: number, field: string, value: any) => {
   //     const updated = [...evaluations]

@@ -5,8 +5,11 @@ import { AppraisalLeadView, EmployeeData, PastAppraisal } from "./types";
 export const leadsApi = baseApi.injectEndpoints({
   overrideExisting: true,
   endpoints: (builder) => ({
-    getLeads: builder.query<EmployeeData[], void>({
-      query: () => `/self-appraisal/get-appraisals-of-lead/`,
+    getLeads: builder.query<EmployeeData[],{id:number}>({
+      query: ({id}) => ({
+        url: `/self-appraisal/get-appraisals-of-lead/${id}`,
+        method: 'GET'
+      }) ,
       providesTags: ['LEADS']
     }),
     getAppraisalById: builder.query<AppraisalLeadView, { id: number }>({
