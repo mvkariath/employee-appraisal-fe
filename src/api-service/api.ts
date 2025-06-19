@@ -1,31 +1,30 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const baseApi = createApi({
-	reducerPath: "baseApi",
-	tagTypes: ['EMPLOYEES', 'CYCLES','LEADS','APPRAISALS'],
-	baseQuery: fetchBaseQuery({
-		baseUrl: "http://localhost:3000",
-		prepareHeaders: (headers) => {
-			const stored = localStorage.getItem("token");
+  reducerPath: "baseApi",
+  tagTypes: ["EMPLOYEES", "CYCLES", "LEADS", "APPRAISALS"],
+  baseQuery: fetchBaseQuery({
+    baseUrl: "http://localhost:4000",
+    prepareHeaders: (headers) => {
+      const stored = localStorage.getItem("token");
 
-			if (stored) {
-				try {
-					const userDetails = JSON.parse(stored);
-					if (userDetails?.token) {
-						headers.set("Authorization", `Bearer ${userDetails.token}`);
-					}
-				} catch (error) {
-					console.error("Failed to parse token from localStorage", error);
-				}
-			}
+      if (stored) {
+        try {
+          const userDetails = JSON.parse(stored);
+          if (userDetails?.token) {
+            headers.set("Authorization", `Bearer ${userDetails.token}`);
+          }
+        } catch (error) {
+          console.error("Failed to parse token from localStorage", error);
+        }
+      }
 
-			return headers;
-		},
-
-	}),
-	refetchOnMountOrArgChange: true,
-	refetchOnReconnect: true,
-	endpoints: () => ({}),
+      return headers;
+    },
+  }),
+  refetchOnMountOrArgChange: true,
+  refetchOnReconnect: true,
+  endpoints: () => ({}),
 });
 
 export default baseApi;

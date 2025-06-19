@@ -1,4 +1,5 @@
-import { useState } from "react";
+"use client";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useGetEmployeesQuery } from "@/api-service/employees/employee.api";
 import { useCreateCycleMutation } from "@/api-service/appraisalCycle/appraisalCycle.api";
+import { Skeleton } from "@/components/ui/skeleton";
 
+// --- TYPE DEFINITIONS & HELPERS ---
 interface Employee {
   id: number;
   name: string;
@@ -31,42 +34,50 @@ interface Employee {
   role: string;
 }
 
-const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-const useDetails = token?JSON.parse(token):null
+const token =
+  typeof window !== "undefined" ? localStorage.getItem("token") : null;
+const useDetails = token ? JSON.parse(token) : null;
 
 interface AppraisalCycleModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave?: (cycleData: any) => void;
 }
+
+const EmployeeListSkeleton = () => (
+  <div className="space-y-3">
+    {[...Array(4)].map((_, i) => (
+      <div key={i} className="flex items-center space-x-3 p-2">
+        <Skeleton className="h-5 w-5 rounded bg-white/10" />
+        <div className="flex-1 space-y-1.5">
+          <Skeleton className="h-4 w-1/2 bg-white/10" />
+          <Skeleton className="h-3 w-1/3 bg-white/10" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+// --- MAIN COMPONENT ---
 const AppraisalCycleModal = ({
   open,
   onOpenChange,
-  onSave,
 }: AppraisalCycleModalProps) => {
   const [cycleName, setCycleName] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const today = startOfDay(new Date());
+  const { data: employees = [], isLoading: isLoadingEmployees } =
+    useGetEmployeesQuery();
+  const [createCycle, { isLoading: isCreating }] = useCreateCycleMutation();
 
-
-  const { data, isLoading } = useGetEmployeesQuery();
-  const [createCycle] = useCreateCycleMutation();
-
-
-  const employees: Employee[] = data ?? [];
-
-
-
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const filteredEmployees = employees?.filter((emp) =>
-    emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.department.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredEmployees = employees?.filter(
+    (emp) =>
+      emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emp.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emp.department.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleEmployeeToggle = (employeeId: number) => {
@@ -89,12 +100,9 @@ const AppraisalCycleModal = ({
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
-
     if (!cycleName.trim()) newErrors.cycleName = "Cycle name is required.";
     if (!startDate) newErrors.startDate = "Start date is required.";
     if (!endDate) newErrors.endDate = "End date is required.";
-    //if (startDate && startDate < today)
-    //  newErrors.startDate = "Start date cannot be in the past.";
     if (startDate && endDate && startDate >= endDate)
       newErrors.endDate = "End date must be after start date.";
     if (selectedEmployees.length === 0)
@@ -104,38 +112,27 @@ const AppraisalCycleModal = ({
     return Object.keys(newErrors).length === 0;
   };
 
- const handleSave = async () => {
-  if (!validateForm()) {
-    toast("Please fix the highlighted errors.");
-    return;
-  }
-
-  const payload = {
-    name: cycleName,
-    start_date: startDate,
-    end_date: endDate,
-    status: "INITIATED",
-    created_by: useDetails.id,
-    employees: selectedEmployees, // array of employee IDs
+  const handleSave = async () => {
+    if (!validateForm()) {
+      toast.error("Please fix the highlighted errors before saving.");
+      return;
+    }
+    const payload = {
+      name: cycleName,
+      start_date: startDate,
+      end_date: endDate,
+      status: "INITIATED",
+      created_by: useDetails.id,
+      employees: selectedEmployees,
+    };
+    try {
+      await createCycle(payload).unwrap();
+      toast.success("Appraisal cycle created successfully!");
+      handleClose(); // Use a single close/reset handler
+    } catch (error) {
+      toast.error("Failed to create appraisal cycle. Please try again.");
+    }
   };
-
-  try {
-    await createCycle(payload).unwrap();
-    toast.success("Appraisal cycle created successfully!");
-
-    // Reset form
-    setCycleName("");
-    setStartDate(undefined);
-    setEndDate(undefined);
-    setSelectedEmployees([]);
-    setErrors({});
-    onOpenChange(false);
-  } catch (error) {
-    console.error("Error creating cycle:", error);
-    toast.error("Failed to create appraisal cycle.");
-  }
-};
-
 
   const handleClose = () => {
     setCycleName("");
@@ -147,209 +144,231 @@ const AppraisalCycleModal = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-[80%] min-h-[80vh] overflow-y-auto rounded-2xl shadow-2xl">
-        <DialogHeader className="sticky top-0 z-10 py-4 px-6 bg-white border-b border-gray-200 rounded-t-2xl">
-          <DialogTitle className="text-2xl font-bold text-gray-900">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent
+        className="min-w-[80%] max-h-[90vh] flex flex-col p-0
+                                bg-[#002A35]/80 backdrop-blur-xl border border-white/10 
+                                text-white rounded-2xl shadow-2xl"
+      >
+        <DialogHeader className="p-6 border-b border-white/10 flex-shrink-0">
+          <DialogTitle className="text-2xl font-semibold">
             Create New Appraisal Cycle
           </DialogTitle>
-          <DialogDescription className="text-sm text-gray-600 mt-1">
-            Set up a new performance review cycle and select the employees to
-            include.
+          <DialogDescription className="text-white/70">
+            Set up a new performance review and select employees.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="p-6 space-y-8">
-          {/* Cycle Name */}
-          <div className="space-y-1">
-            <Label htmlFor="cycleName">
-              Cycle Name <span className="text-red-500">*</span>
+        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+          <div className="space-y-2">
+            <Label htmlFor="cycleName" className="text-white/80">
+              Cycle Name <span className="text-red-400">*</span>
             </Label>
             <Input
               id="cycleName"
               value={cycleName}
               onChange={(e) => {
                 setCycleName(e.target.value);
-                setErrors((prev) => ({ ...prev, cycleName: "" }));
+                setErrors((p) => ({ ...p, cycleName: "" }));
               }}
-              className={cn(errors.cycleName && "border-red-500")}
+              className={cn(
+                "bg-black/20 border-white/20 placeholder:text-white/40",
+                errors.cycleName && "border-red-400 focus-visible:ring-red-400"
+              )}
               placeholder="e.g., Q1 2024 Performance Review"
             />
             {errors.cycleName && (
-              <p className="text-sm text-red-500 mt-1">{errors.cycleName}</p>
+              <p className="text-sm text-red-400 mt-1">{errors.cycleName}</p>
             )}
           </div>
 
-          {/* Start and End Dates */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-1">
-              <Label>
-                Start Date <span className="text-red-500">*</span>
+            <div className="space-y-2">
+              <Label className="text-white/80">
+                Start Date <span className="text-red-400">*</span>
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      !startDate && "text-muted-foreground",
-                      errors.startDate && "border-red-500"
+                      "w-full justify-start text-left font-normal bg-black/20 border-white/20 hover:bg-black/40 hover:text-white",
+                      !startDate && "text-white/60",
+                      errors.startDate && "border-red-400"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {startDate ? format(startDate, "PPP") : "Pick start date"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="start">
+                <PopoverContent
+                  className="w-auto p-0 bg-[#002A35]/80 backdrop-blur-xl border-white/10 text-white"
+                  align="start"
+                >
                   <Calendar
                     mode="single"
                     selected={startDate}
-                    onSelect={(date) => {
-                      setStartDate(date);
-                      setErrors((prev) => ({ ...prev, startDate: "" }));
+                    onSelect={(d) => {
+                      setStartDate(d);
+                      setErrors((p) => ({ ...p, startDate: "" }));
                     }}
                     initialFocus
-                    className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
               {errors.startDate && (
-                <p className="text-sm text-red-500 mt-1">{errors.startDate}</p>
+                <p className="text-sm text-red-400 mt-1">{errors.startDate}</p>
               )}
             </div>
-
-            <div className="space-y-1">
-              <Label>
-                End Date <span className="text-red-500">*</span>
+            <div className="space-y-2">
+              <Label className="text-white/80">
+                End Date <span className="text-red-400">*</span>
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      !endDate && "text-muted-foreground",
-                      errors.endDate && "border-red-500"
+                      "w-full justify-start text-left font-normal bg-black/20 border-white/20 hover:bg-black/40 hover:text-white",
+                      !endDate && "text-white/60",
+                      errors.endDate && "border-red-400"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {endDate ? format(endDate, "PPP") : "Pick end date"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 mt-2 border shadow-lg" align="start">
+                <PopoverContent
+                  className="w-auto p-0 bg-[#002A35]/80 backdrop-blur-xl border-white/10 text-white"
+                  align="start"
+                >
                   <Calendar
-                    selected={endDate}
-                    onSelect={(date) => {
-                      setEndDate(date);
-                      setErrors((prev) => ({ ...prev, endDate: "" }));
-                    }}
                     mode="single"
+                    selected={endDate}
+                    onSelect={(d) => {
+                      setEndDate(d);
+                      setErrors((p) => ({ ...p, endDate: "" }));
+                    }}
                     initialFocus
-                    className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
               {errors.endDate && (
-                <p className="text-sm text-red-500 mt-1">{errors.endDate}</p>
+                <p className="text-sm text-red-400 mt-1">{errors.endDate}</p>
               )}
             </div>
           </div>
 
-          {/* Employee Selection */}
-
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <Label>
-                Select Employees ({selectedEmployees.length}/{employees?.length})
+              <Label className="text-white/80">
+                Select Employees ({selectedEmployees.length}/{employees.length}){" "}
+                <span className="text-red-400">*</span>
               </Label>
-              <Button variant="ghost" onClick={handleSelectAll}>
-                {selectedEmployees.length === employees?.length
+              <Button
+                variant="ghost"
+                onClick={handleSelectAll}
+                className="text-white/80 hover:bg-white/10 hover:text-white"
+              >
+                {selectedEmployees.length === employees.length
                   ? "Deselect All"
                   : "Select All"}
               </Button>
             </div>
 
-            {/* Pills for selected employees */}
             {selectedEmployees.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 p-3 bg-black/20 border border-white/10 rounded-lg">
                 {selectedEmployees.map((id) => {
-                  const emp = employees?.find((e) => e.id === id);
-                  if (!emp) return null;
-                  return (
+                  const emp = employees.find((e) => e.id === id);
+                  return emp ? (
                     <div
                       key={emp.id}
-                      className="flex items-center bg-gray-200 text-gray-800 rounded-full px-3 py-1 text-sm font-medium"
+                      className="flex items-center bg-blue-500/20 text-blue-200 rounded-full px-3 py-1 text-sm font-medium"
                     >
                       {emp.name}
                       <button
                         onClick={() => handleEmployeeToggle(emp.id)}
-                        className="ml-2 hover:text-red-500"
+                        className="ml-2 text-blue-200/70 hover:text-white"
                         aria-label={`Remove ${emp.name}`}
                       >
                         <X className="w-4 h-4" />
                       </button>
                     </div>
-                  );
+                  ) : null;
                 })}
               </div>
             )}
 
-            {/* Search box */}
             <Input
-              placeholder="Search by name, role, or department"
+              placeholder="Search by name, role, or department..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
+              className="w-full bg-black/20 border-white/20 placeholder:text-white/40"
             />
 
-            {/* Employee list */}
-            <div className="border rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-              <div className="grid grid-cols-1 gap-3">
-                {filteredEmployees.length > 0 ? (
-                  filteredEmployees?.map((employee) => (
-                    <div
-                      key={employee.id}
-                      className="flex items-start space-x-3 p-2 hover:bg-gray-100 rounded-md transition"
-                    >
-                      <Checkbox
-                        id={`employee-${employee.id}`}
-                        checked={selectedEmployees.includes(employee.id)}
-                        onCheckedChange={() => handleEmployeeToggle(employee.id)}
-                      />
-                      <div className="flex-1">
-                        <label
-                          htmlFor={`employee-${employee.id}`}
-                          className="text-sm font-medium text-gray-800 cursor-pointer"
-                        >
-                          {employee.name}
-                        </label>
-                        <p className="text-xs text-gray-500">
-                          {employee.role} • {employee.department}
-                        </p>
+            <div className="border border-white/10 rounded-lg p-4 max-h-64 overflow-y-auto bg-black/20">
+              {isLoadingEmployees ? (
+                <EmployeeListSkeleton />
+              ) : (
+                <div className="grid grid-cols-1 gap-1">
+                  {filteredEmployees.length > 0 ? (
+                    filteredEmployees.map((employee) => (
+                      <div
+                        key={employee.id}
+                        className="flex items-start space-x-3 p-2 hover:bg-white/10 rounded-md transition cursor-pointer"
+                        onClick={() => handleEmployeeToggle(employee.id)}
+                      >
+                        <Checkbox
+                          id={`employee-${employee.id}`}
+                          checked={selectedEmployees.includes(employee.id)}
+                          className="mt-0.5 border-white/30"
+                        />
+                        <div className="flex-1">
+                          <label
+                            htmlFor={`employee-${employee.id}`}
+                            className="font-medium text-white cursor-pointer"
+                          >
+                            {employee.name}
+                          </label>
+                          <p className="text-xs text-white/60">
+                            {employee.role} • {employee.department}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500">No employees found.</p>
-                )}
-              </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-white/60 text-center py-4">
+                      No employees found.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
-
+            {errors.employees && (
+              <p className="text-sm text-red-400 mt-1">{errors.employees}</p>
+            )}
           </div>
         </div>
 
-        <DialogFooter className="bg-gray-50 px-6 py-4 rounded-b-2xl mt-4 border-t">
-          <Button variant="outline" onClick={handleClose}>
-            <X className="h-4 w-4 mr-2" /> Cancel
+        <DialogFooter className="p-6 border-t border-white/10 flex-shrink-0">
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            className="border-white/20 text-white/80 hover:bg-white/10 hover:text-white rounded-lg"
+          >
+            Cancel
           </Button>
           <Button
-            className="bg-gray-900 text-white hover:bg-black"
             onClick={handleSave}
+            disabled={isCreating}
+            className="gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:opacity-90 transition-opacity rounded-lg"
           >
-            <Save className="h-4 w-4 mr-2" /> Create Cycle
+            <Save className="h-4 w-4" />
+            {isCreating ? "Creating..." : "Create Cycle"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-
   );
 };
 

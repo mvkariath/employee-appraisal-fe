@@ -16,7 +16,9 @@ import { useEffect, useState } from "react";
 export function UserNav() {
   const router = useRouter();
 
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string } | null>(
+    null
+  );
 
   useEffect(() => {
     const tokenData = localStorage.getItem("token");
@@ -41,8 +43,11 @@ export function UserNav() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+      <DropdownMenuTrigger asChild className="">
+        <Button
+          variant="outline"
+          className="relative h-8 w-8 rounded-full bg-transparent"
+        >
           <Avatar className="h-8 w-8">
             <AvatarImage src="/avatars/01.png" alt={user?.name || "User"} />
             <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
@@ -53,7 +58,9 @@ export function UserNav() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user?.name || "User"}</p>
+            <p className="text-sm font-medium leading-none">
+              {user?.name || "User"}
+            </p>
             <p className="text-xs leading-none text-muted-foreground">
               {user?.email || "No email"}
             </p>

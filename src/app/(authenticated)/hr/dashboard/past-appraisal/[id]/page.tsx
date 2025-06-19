@@ -1,9 +1,15 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Table } from "@/components/ui/table";
 import { FileText, Grid, User } from "lucide-react";
-import EmployeeForm from "../../appraisal/[id]/components/EmployeeForm";
+import EmployeeForm from "../../../appraisal/[id]/components/EmployeeForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -15,8 +21,12 @@ import { useGetAppraisalsByCycleIdQuery } from "@/api-service/appraisal/appraisa
 const Index = () => {
   const [displayMode, setDisplayMode] = useState<"card" | "table">("card");
   const [isViewForm, setIsViewForm] = useState(false);
-  const [currentIdpEmployee, setCurrentIdpEmployee] = useState<Employee & { appraisalId: string }>();
-  const [employees, setEmployees] = useState<(Employee & { appraisalId: string })[]>([]);
+  const [currentIdpEmployee, setCurrentIdpEmployee] = useState<
+    Employee & { appraisalId: string }
+  >();
+  const [employees, setEmployees] = useState<
+    (Employee & { appraisalId: string })[]
+  >([]);
 
   const params = useParams();
   const id = params.id;
@@ -57,7 +67,7 @@ const Index = () => {
     return statusColorMap[status] || "bg-gray-100 text-gray-800";
   };
 
-    const renderCardSkeleton = () => (
+  const renderCardSkeleton = () => (
     <Card className="hover:shadow-lg transition-shadow">
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
@@ -145,7 +155,10 @@ const Index = () => {
       {isLoading
         ? [...Array(6)].map((_, i) => <div key={i}>{renderCardSkeleton()}</div>)
         : employees.map((employee) => (
-            <Card key={employee.id} className="hover:shadow-lg transition-shadow">
+            <Card
+              key={employee.id}
+              className="hover:shadow-lg transition-shadow"
+            >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -174,7 +187,10 @@ const Index = () => {
                     <span className="text-gray-600">Current Status:</span>
                     <span>{getProgressFromStatus(employee.status)}%</span>
                   </div>
-                  <Progress value={getProgressFromStatus(employee.status)} className="h-2" />
+                  <Progress
+                    value={getProgressFromStatus(employee.status)}
+                    className="h-2"
+                  />
                   <div className="flex gap-2 flex-wrap">
                     <Button
                       size="sm"
@@ -198,29 +214,43 @@ const Index = () => {
     </div>
   );
 
-  const renderTableView = () => (
-    isLoading ? renderTableSkeleton() : (
+  const renderTableView = () =>
+    isLoading ? (
+      renderTableSkeleton()
+    ) : (
       <div className="border rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              {["Employee", "Department", "Status", "Progress", "Actions"].map(header => (
-                <th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {header}
-                </th>
-              ))}
+              {["Employee", "Department", "Status", "Progress", "Actions"].map(
+                (header) => (
+                  <th
+                    key={header}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    {header}
+                  </th>
+                )
+              )}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {employees.map((emp) => (
               <tr key={emp.id}>
                 <td className="px-6 py-4 whitespace-nowrap">{emp.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{emp.department}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <Badge className={getStatusColor(emp.status)}>{emp.status}</Badge>
+                  {emp.department}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <Progress value={getProgressFromStatus(emp.status)} className="h-2" />
+                  <Badge className={getStatusColor(emp.status)}>
+                    {emp.status}
+                  </Badge>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <Progress
+                    value={getProgressFromStatus(emp.status)}
+                    className="h-2"
+                  />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Button
@@ -238,8 +268,7 @@ const Index = () => {
           </tbody>
         </table>
       </div>
-    )
-  );
+    );
 
   return (
     <Card className="border border-gray-200 bg-gray-100 h-[90vh] overflow-y-auto rounded-md dark:bg-gray-800">

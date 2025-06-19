@@ -1,5 +1,4 @@
 import React from "react";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableHeader,
@@ -13,6 +12,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { FileText, Mail } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// --- TYPE DEFINITIONS (from your original code) ---
+export enum Competency {
+  TECHNICAL = "TECHNICAL",
+  FUNCTIONAL = "FUNCTIONAL",
+  COMMUNICATION = "COMMUNICATION",
+  ENERGY_DRIVE = "ENERGY & DRIVE",
+  RESPONSIBILITY_TRUST = "RESPONSIBILITY & TRUST",
+  TEAMWORK = "TEAMWORK",
+  MANAGINGPROCESSES_WORK = "MANAGING PROCESSES & WORK",
+}
 
 type SelfAppraisalData = {
   delivery_details: string;
@@ -29,16 +40,6 @@ type IDPData = {
   technical_plan: string;
 }[];
 
-export enum Competency {
-  TECHNICAL = "TECHNICAL",
-  FUNCTIONAL = "FUNCTIONAL",
-  COMMUNICATION = "COMMUNICATION",
-  ENERGY_DRIVE = "ENERGY & DRIVE",
-  RESPONSIBILITY_TRUST = "RESPONSIBILITY & TRUST",
-  TEAMWORK = "TEAMWORK",
-  MANAGINGPROCESSES_WORK = "MANAGING PROCESSES & WORK",
-}
-
 export type PerformanceFactorData = {
   id: number;
   competency: Competency | string;
@@ -53,7 +54,10 @@ interface AppraisalDetailsViewProps {
   idp?: IDPData;
   viewingAs?: string;
   onRemindUser?: () => void;
+  showIdpSection?: boolean; // From previous step, good to keep
 }
+
+// --- STYLING HELPERS & COMPONENTS ---
 
 const competencyDisplay: Record<string, string> = {
   [Competency.TECHNICAL]: "Technical",
@@ -63,287 +67,266 @@ const competencyDisplay: Record<string, string> = {
   [Competency.RESPONSIBILITY_TRUST]: "Responsibility & Trust",
   [Competency.TEAMWORK]: "Teamwork",
   [Competency.MANAGINGPROCESSES_WORK]: "Managing Processes & Work",
-  BEHAVIORAL: "Behavioral", // Added for the IDP data
+  BEHAVIORAL: "Behavioral",
+};
+
+const getRatingColor = (rating: number) => {
+  if (rating <= 1) return { track: "bg-red-500/10", indicator: "bg-red-400" };
+  if (rating <= 2)
+    return { track: "bg-orange-500/10", indicator: "bg-orange-400" };
+  if (rating <= 3)
+    return { track: "bg-yellow-500/10", indicator: "bg-yellow-400" };
+  if (rating <= 4) return { track: "bg-blue-500/10", indicator: "bg-blue-400" };
+  return { track: "bg-green-500/10", indicator: "bg-green-400" };
 };
 
 const EmptyState = ({ onRemind }: { onRemind: () => void }) => (
-  <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-lg bg-gray-50">
-    <FileText className="h-12 w-12 text-gray-400 mb-4" />
-    <h3 className="text-lg font-medium text-gray-900 mb-2">Not Yet Filled</h3>
-    <p className="text-gray-500 mb-4 text-center max-w-md">
-      This section hasn't been completed by the employee yet.
+  <div className="flex flex-col items-center justify-center p-8 text-center bg-black/20 border border-dashed border-white/20 rounded-xl">
+    <FileText className="h-10 w-10 text-white/40 mb-4" />
+    <h3 className="text-lg font-semibold text-white mb-1">Not Yet Filled</h3>
+    <p className="text-white/60 mb-6 max-w-sm">
+      This section hasn't been completed by the employee yet. You can send a
+      friendly reminder.
     </p>
     <Button
       variant="outline"
       onClick={onRemind}
-      className="flex items-center gap-2"
+      className="border-white/20 text-white/80 hover:bg-white/10 hover:text-white rounded-lg gap-2"
     >
       <Mail className="h-4 w-4" />
-      Remind the User
+      Remind User
     </Button>
+  </div>
+);
+
+const SectionWrapper: React.FC<{
+  title: string;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+}> = ({ title, children, action }) => (
+  <div className="space-y-4">
+    <div className="flex justify-between items-center">
+      <h2 className="text-xl font-bold text-white tracking-tight">{title}</h2>
+      {action}
+    </div>
+    {children}
   </div>
 );
 
 const PerformanceFactorsTable: React.FC<{
   factors: PerformanceFactorData[];
-  onRemind?: () => void;
-}> = ({ factors, onRemind }) => {
-  if (!factors?.length) {
-    return <EmptyState onRemind={onRemind || (() => { })} />;
-  }
-
-  return (
-    <div className="overflow-x-auto w-full">
-      <Table className="border rounded-lg">
-        <TableHeader>
-          <TableRow className="bg-gray-100 text-gray-800">
-            <TableHead className="text-base font-semibold">
-              Competency
-            </TableHead>
-            <TableHead className="text-base font-semibold">Strengths</TableHead>
-            <TableHead className="text-base font-semibold">
-              Areas for Improvement
-            </TableHead>
-            <TableHead className="text-base font-semibold">Rating</TableHead>
-          </TableRow>
-        </TableHeader>
-
-        <TableBody>
-          {factors.map((pf, idx) => (
+}> = ({ factors }) => (
+  <div className="overflow-x-auto w-full bg-white/5 border border-white/10 rounded-xl">
+    <Table>
+      <TableHeader>
+        <TableRow className="border-b-white/10 hover:bg-transparent">
+          <TableHead className="font-semibold text-white/80">
+            Competency
+          </TableHead>
+          <TableHead className="font-semibold text-white/80">
+            Strengths
+          </TableHead>
+          <TableHead className="font-semibold text-white/80">
+            Areas for Improvement
+          </TableHead>
+          <TableHead className="font-semibold text-white/80">Rating</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {factors.map((pf, idx) => {
+          const ratingColors = getRatingColor(pf.rating);
+          return (
             <TableRow
               key={pf.id || idx}
-              className="hover:bg-gray-50 transition-colors"
+              className="border-b-white/10 hover:bg-white/5"
             >
               <TableCell>
-                <Badge
-                  variant="secondary"
-                  className="text-sm font-medium px-3 py-1 rounded-full bg-blue-100 text-blue-800"
-                >
+                <Badge className="bg-blue-500/10 text-blue-300 border border-blue-500/20 font-medium">
                   {competencyDisplay[pf.competency] || pf.competency}
                 </Badge>
               </TableCell>
-
-              <TableCell className="whitespace-pre-line text-sm text-gray-700">
-                {pf.strengths || "-"}
+              <TableCell className="whitespace-pre-line text-white/90">
+                {pf.strengths || "—"}
               </TableCell>
-
-              <TableCell className="whitespace-pre-line text-sm text-gray-700">
-                {pf.improvements || "-"}
+              <TableCell className="whitespace-pre-line text-white/90">
+                {pf.improvements || "—"}
               </TableCell>
-
               <TableCell>
-                <div className="flex items-center gap-2 min-w-[120px]">
+                <div className="flex items-center gap-3 min-w-[150px]">
                   <Progress
                     value={pf.rating * 20}
-                    className={`w-28 h-2 rounded-full shadow-inner ${pf.rating <= 1
-                      ? "bg-red-200 [&>div]:bg-red-500"
-                      : pf.rating <= 2
-                        ? "bg-orange-200 [&>div]:bg-orange-500"
-                        : pf.rating <= 3
-                          ? "bg-yellow-200 [&>div]:bg-yellow-500"
-                          : pf.rating <= 4
-                            ? "bg-blue-200 [&>div]:bg-blue-500"
-                            : "bg-green-200 [&>div]:bg-green-500"
-                      }`}
+                    className={cn("w-24 h-2 rounded-full", ratingColors.track)}
                   />
-                  <span className="text-sm font-medium text-gray-800">
+                  <span className="text-sm font-semibold text-white">
                     {pf.rating}/5
                   </span>
                 </div>
               </TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
-};
+          );
+        })}
+      </TableBody>
+    </Table>
+  </div>
+);
 
-const IDPTable: React.FC<{ idp: IDPData; onRemind?: () => void }> = ({
-  idp,
-  onRemind,
-}) => {
-  if (!idp?.length) {
-    return <EmptyState onRemind={onRemind || (() => { })} />;
-  }
-
-  return (
-    <div className="overflow-x-auto w-full">
-      <Table className="border rounded-lg">
-        <TableHeader>
-          <TableRow className="bg-gray-100 text-gray-800">
-            <TableHead className="text-base font-semibold">
-              Competency
-            </TableHead>
-            <TableHead className="text-base font-semibold">Objective</TableHead>
-            <TableHead className="text-base font-semibold">Plan</TableHead>
+const IDPTable: React.FC<{ idp: IDPData }> = ({ idp }) => (
+  <div className="overflow-x-auto w-full bg-white/5 border border-white/10 rounded-xl">
+    <Table>
+      <TableHeader>
+        <TableRow className="border-b-white/10 hover:bg-transparent">
+          <TableHead className="font-semibold text-white/80">
+            Competency
+          </TableHead>
+          <TableHead className="font-semibold text-white/80">
+            Objective
+          </TableHead>
+          <TableHead className="font-semibold text-white/80">Plan</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {idp.map((item, idx) => (
+          <TableRow key={idx} className="border-b-white/10 hover:bg-white/5">
+            <TableCell>
+              <Badge className="bg-purple-500/10 text-purple-300 border border-purple-500/20 font-medium">
+                {competencyDisplay[item.competency] || item.competency}
+              </Badge>
+            </TableCell>
+            <TableCell className="text-white/90">
+              {item.technical_objective || "—"}
+            </TableCell>
+            <TableCell className="text-white/90">
+              {item.technical_plan || "—"}
+            </TableCell>
           </TableRow>
-        </TableHeader>
-        <TableBody>
-          {idp.map((item, idx) => (
-            <TableRow key={idx} className="hover:bg-gray-50 transition-colors">
-              <TableCell>
-                <Badge
-                  variant="secondary"
-                  className="px-3 py-1 rounded-full bg-blue-100 text-blue-800"
-                >
-                  {competencyDisplay[item.competency] || item.competency}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-sm text-gray-700">
-                {item.technical_objective || "-"}
-              </TableCell>
-              <TableCell className="text-sm text-gray-700">
-                {item.technical_plan || "-"}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
-};
+        ))}
+      </TableBody>
+    </Table>
+  </div>
+);
 
+// --- MAIN COMPONENT ---
 const AppraisalDetailsView: React.FC<AppraisalDetailsViewProps> = ({
   selfAppraisal,
   performanceFactors,
   idp,
   viewingAs,
   onRemindUser,
+  showIdpSection = true, // Default to true if not provided
 }) => {
   const handleRemindUser = () => {
-    toast("Reminder sent to the user to fill out the appraisal form.");
+    toast.success("Reminder sent to the user!");
     onRemindUser?.();
   };
 
-  const currentSelfAppraisal = selfAppraisal || [];
-  const showReminderButton = viewingAs === "HR" || viewingAs === "LEAD";
+  const canRemind = viewingAs === "HR" || viewingAs === "LEAD";
+  const selfAppraisalData = selfAppraisal || [];
 
+  const RemindButton = () => (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleRemindUser}
+      className="border-white/20 text-white/80 hover:bg-white/10 hover:text-white rounded-lg gap-2"
+    >
+      <Mail className="h-4 w-4" /> Remind
+    </Button>
+  );
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 w-full px-4 sm:px-0 mx-auto ">
-      {/* Self Appraisal */}
-      <Card className="shadow-none border">
-        <CardHeader className="flex flex-row justify-between items-center">
-          <h2 className="text-lg sm:text-xl font-semibold tracking-tight">
-            Employee Self Appraisal
-          </h2>
-          {showReminderButton && !currentSelfAppraisal && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRemindUser}
-              className="flex items-center gap-2"
-            >
-              <Mail className="h-4 w-4" />
-              Remind
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          {Array.isArray(currentSelfAppraisal) && currentSelfAppraisal.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table className="border rounded-lg">
-                <TableHeader>
-                  <TableRow className="bg-blue-50">
-                    <TableHead className="text-base font-semibold text-blue-800 border-r">Delivery Details</TableHead>
-                    <TableHead className="text-base font-semibold text-blue-800 border-r">Accomplishments</TableHead>
-                    <TableHead className="text-base font-semibold text-blue-800 border-r">Approach</TableHead>
-                    <TableHead className="text-base font-semibold text-blue-800 border-r">Improvements</TableHead>
-                    <TableHead className="text-base font-semibold text-blue-800">Time Frame</TableHead>
+    <div className="flex flex-col gap-12 w-full">
+      {/* Self Appraisal Section */}
+      <SectionWrapper
+        title="Employee Self Appraisal"
+        action={
+          canRemind && selfAppraisalData.length === 0 ? <RemindButton /> : null
+        }
+      >
+        {selfAppraisalData.length > 0 ? (
+          <div className="overflow-x-auto w-full bg-white/5 border border-white/10 rounded-xl">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b-white/10 hover:bg-transparent">
+                  <TableHead className="font-semibold text-white/80">
+                    Delivery Details
+                  </TableHead>
+                  <TableHead className="font-semibold text-white/80">
+                    Accomplishments
+                  </TableHead>
+                  <TableHead className="font-semibold text-white/80">
+                    Approach
+                  </TableHead>
+                  <TableHead className="font-semibold text-white/80">
+                    Improvements
+                  </TableHead>
+                  <TableHead className="font-semibold text-white/80">
+                    Time Frame
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {selfAppraisalData.map((entry, idx) => (
+                  <TableRow
+                    key={idx}
+                    className="border-b-white/10 hover:bg-white/5"
+                  >
+                    <TableCell className="whitespace-pre-line text-white/90 align-top font-semibold">
+                      {entry.delivery_details}
+                    </TableCell>
+                    <TableCell className="whitespace-pre-line text-white/90 align-top">
+                      {entry.accomplishments}
+                    </TableCell>
+                    <TableCell className="whitespace-pre-line text-white/90 align-top">
+                      {entry.approach_solution}
+                    </TableCell>
+                    <TableCell className="whitespace-pre-line text-white/90 align-top">
+                      {entry.improvement_possibilities}
+                    </TableCell>
+                    <TableCell className="whitespace-pre-line text-white/90 align-top">
+                      {entry.project_time_frame}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentSelfAppraisal.map((entry, idx) => (
-                    <TableRow key={idx} className="hover:bg-gray-50">
-                      <TableCell className="whitespace-pre-line text-sm text-gray-700 border-r align-top min-w-[200px]">
-                        {entry.delivery_details}
-                      </TableCell>
-                      <TableCell className="whitespace-pre-line text-sm text-gray-700 border-r align-top min-w-[200px]">
-                        {entry.accomplishments}
-                      </TableCell>
-                      <TableCell className="whitespace-pre-line text-sm text-gray-700 border-r align-top min-w-[200px]">
-                        {entry.approach_solution}
-                      </TableCell>
-                      <TableCell className="whitespace-pre-line text-sm text-gray-700 border-r align-top min-w-[200px]">
-                        {entry.improvement_possibilities}
-                      </TableCell>
-                      <TableCell className="whitespace-pre-line text-sm text-gray-700 align-top min-w-[150px]">
-                        {entry.project_time_frame}
-                      </TableCell>
-                    </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <EmptyState onRemind={handleRemindUser} />
+        )}
+      </SectionWrapper>
 
-                  ))}
-                  {/* {currentSelfAppraisal.leads?.length > 0 && (
-                    <TableRow className="bg-gray-50">
-                      <TableCell colSpan={5} className="text-sm text-gray-600 italic px-4 py-2">
-                        <strong className="text-gray-700 font-medium">Project Leads:</strong>{" "}
-                        {currentSelfAppraisal.leads.map((lead) => lead.name).join(", ")}
-                      </TableCell>
-                    </TableRow>
-                  )} */}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
+      {/* Performance Factors Section */}
+      <SectionWrapper
+        title="Performance Factors"
+        action={
+          canRemind &&
+          (!performanceFactors || performanceFactors.length === 0) ? (
+            <RemindButton />
+          ) : null
+        }
+      >
+        {!performanceFactors || performanceFactors.length === 0 ? (
+          <EmptyState onRemind={handleRemindUser} />
+        ) : (
+          <PerformanceFactorsTable factors={performanceFactors} />
+        )}
+      </SectionWrapper>
+
+      {/* Individual Development Plan Section */}
+      {showIdpSection && (
+        <SectionWrapper
+          title="Individual Development Plan (IDP)"
+          action={
+            canRemind && (!idp || idp.length === 0) ? <RemindButton /> : null
+          }
+        >
+          {!idp || idp.length === 0 ? (
             <EmptyState onRemind={handleRemindUser} />
+          ) : (
+            <IDPTable idp={idp} />
           )}
-
-        </CardContent>
-      </Card>
-
-      {/* Performance Factors */}
-      <Card className="shadow-none border">
-        <CardHeader className="flex flex-row justify-between items-center">
-          <h2 className="text-lg sm:text-xl font-semibold tracking-tight">
-            Performance Factors
-          </h2>
-          {showReminderButton &&
-            (!performanceFactors || performanceFactors.length === 0) && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRemindUser}
-                className="flex items-center gap-2"
-              >
-                <Mail className="h-4 w-4" />
-                Remind
-              </Button>
-            )}
-        </CardHeader>
-        <CardContent>
-          <PerformanceFactorsTable
-            factors={performanceFactors || []}
-            onRemind={showReminderButton ? handleRemindUser : undefined}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Individual Development Plan */}
-      <Card className="shadow-none border">
-        <CardHeader className="flex flex-row justify-between items-center">
-          <h2 className="text-lg sm:text-xl font-semibold tracking-tight">
-            Individual Development Plan (IDP)
-          </h2>
-          {showReminderButton && (!idp || idp.length === 0) && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRemindUser}
-              className="flex items-center gap-2"
-            >
-              <Mail className="h-4 w-4" />
-              Remind
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          <IDPTable
-            idp={idp || []}
-            onRemind={showReminderButton ? handleRemindUser : undefined}
-          />
-        </CardContent>
-      </Card>
+        </SectionWrapper>
+      )}
     </div>
   );
 };
