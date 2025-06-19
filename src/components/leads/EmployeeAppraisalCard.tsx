@@ -4,32 +4,32 @@ import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
+import { EmployeeData } from "@/api-service/leads/types"
 
 export interface EmployeeAppraisalCardProps {
-  appraisal: {
-    employeeId: string
-    employeeName: string
-    dueDate: string
-    progress: number
-    status: "pending" | "in_progress" | "completed"
-  }
+  appraisal:EmployeeData
 } 
 
 export const EmployeeAppraisalCard = ({ appraisal }: EmployeeAppraisalCardProps) => {
   const router = useRouter()
 
   const handleViewAppraisal = () => {
-    router.push(`/leads/appraisal/${appraisal.employeeId}`)
+    router.push(`/leads/appraisal/${appraisal.appraisalId}`)
+  }
+
+  function moment(endDate: Date) {
+    throw new Error("Function not implemented.")
   }
 
   return (
     <Card>
       <CardHeader className="flex justify-between items-start">
         <div>
-          <CardTitle>{appraisal.employeeName}</CardTitle>
-          <CardDescription>Due: {appraisal.dueDate}</CardDescription>
+          <CardTitle>{appraisal.name}</CardTitle>
+          {/* {appraisal.endDate && <CardDescription>Due:{moment(appraisal?.endDate).format('Do MM YYYY') || null} </CardDescription>} */}
+          <CardDescription>{appraisal.endDate} </CardDescription>
         </div>
-        <Badge variant={
+        {/* <Badge variant={
           appraisal?.status === "completed"
             ? "default"
             : appraisal?.status === "in_progress"
@@ -37,16 +37,16 @@ export const EmployeeAppraisalCard = ({ appraisal }: EmployeeAppraisalCardProps)
               : "outline"
         }>
   {appraisal?.status ? appraisal.status.replace("_", " ") : "N/A"}
-        </Badge>
+        </Badge> */}
       </CardHeader>
       <CardContent>
-        <div className="mb-3">
+        {/* <div className="mb-3">
           <div className="flex justify-between text-sm text-gray-600 mb-1">
             <span>Progress</span>
             <span>{appraisal.progress}%</span>
           </div>
           <Progress value={appraisal.progress} />
-        </div>
+        </div> */}
       </CardContent>
       <CardFooter>
         <Button onClick={handleViewAppraisal} className="w-full">View Appraisal</Button>

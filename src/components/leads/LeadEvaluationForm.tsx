@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { PastAppraisalsModal } from "./PastAppraisalsModal";
 import { PastAppraisalSummary } from "@/types";
+import { PerformanceFactor } from "@/api-service/leads/types";
+import { Input } from "../ui/input";
 
 const competencies = [
   "Technical",
@@ -24,16 +26,20 @@ const competencies = [
 ];
 
 interface LeadEvaluationFormProps {
-  pastAppraisals: PastAppraisalSummary[];
-  isPastAppraisalsOpen: boolean;
-  setIsPastAppraisalsOpen: (open: boolean) => void;
+  evaluations:PerformanceFactor[],
+  onChange:(index,field,value)=>void
+  // isPastAppraisalsOpen: boolean;
+  // setIsPastAppraisalsOpen: (open: boolean) => void;
 }
 
+
 export const LeadEvaluationForm = ({
-  pastAppraisals,
-  isPastAppraisalsOpen,
-  setIsPastAppraisalsOpen,
+  evaluations,
+  onChange,
+  // isPastAppraisalsOpen,
+  // setIsPastAppraisalsOpen,
 }: LeadEvaluationFormProps) => {
+  console.log("Evaluations in LeadEvaluationForm:", evaluations);
   return (
     <>
       <Card>
@@ -50,21 +56,59 @@ export const LeadEvaluationForm = ({
                 <TableHead className="w-1/4">Rating</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            {/* <TableBody>
               {competencies.map((competency) => (
                 <TableRow key={competency}>
                   <TableCell className="font-medium">{competency}</TableCell>
-                  <TableCell><Textarea id={`strengths-${competency}`} /></TableCell>
+                  <TableCell><Textarea id={`strengths-${competency}` } /></TableCell>
                   <TableCell><Textarea id={`improvements-${competency}`} /></TableCell>
                   <TableCell>
                     <Slider id={`rating-${competency}`} min={1} max={10} step={1} defaultValue={[5]} />
                   </TableCell>
                 </TableRow>
               ))}
-            </TableBody>
+            </TableBody> */}
+            <TableBody>
+            {evaluations?.map((item, index) => (
+  <TableRow key={item.competency}>
+    <TableCell className="font-medium">{item.competency}</TableCell>
+    <TableCell>
+      <Textarea
+        id={`strengths-${item.competency}`}
+        value={item.strengths ?? ""}
+        onChange={(e) =>
+          onChange(index, "strengths", e.target.value)
+        }
+      />
+    </TableCell>
+    <TableCell>
+      <Textarea
+        id={`improvements-${item.competency}`}
+        value={item.improvements ?? ""}
+        onChange={(e) =>
+          onChange(index, "improvements", e.target.value)
+        }
+      />
+    </TableCell>
+        <TableCell>
+        <Input
+        type="number"
+        id={`rating-${item.competency}`}
+        value={item.rating ?? 0}
+        min={0}
+        max={10}
+        className="w-20"
+        onChange={(e) =>
+          onChange(index, "rating", parseInt(e.target.value, 10) || 0)
+        }
+      />
+    </TableCell>
+  </TableRow>
+))}
+          </TableBody>
           </Table>
 
-          <div className="flex justify-between mt-6">
+          {/* <div className="flex justify-between mt-6">
             <Button variant="outline" onClick={() => setIsPastAppraisalsOpen(true)}>
               View Past Appraisals
             </Button>
@@ -72,15 +116,15 @@ export const LeadEvaluationForm = ({
               <Button variant="outline">Save as Draft</Button>
               <Button>Submit Evaluation</Button>
             </div>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
 
-      <PastAppraisalsModal
+      {/* <PastAppraisalsModal
         open={isPastAppraisalsOpen}
         onOpenChange={setIsPastAppraisalsOpen}
         pastAppraisals={pastAppraisals}
-      />
+      /> */}
     </>
   );
 };

@@ -2,6 +2,7 @@ import { Appraisal, Employee } from "@/types";
 import baseApi from "../api";
 
 export const appraisalApi = baseApi.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     getAppraisals: builder.query({
       query: () => "/appraisal",
@@ -10,6 +11,7 @@ export const appraisalApi = baseApi.injectEndpoints({
 
     getAppraisalById: builder.query({
       query: (id) => `/appraisal/${id}`,
+      
     }),
 
     getAppraisalsByCycleId: builder.query({

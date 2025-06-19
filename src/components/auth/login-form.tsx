@@ -35,26 +35,16 @@ export function LoginForm() {
   });
 
   const onLogin = async (email: string, password: string) => {
-    console.log(email, password)
-    login({ email, password }).unwrap()
+    login({ email, password })
+      .unwrap()
       .then((response) => {
-        const token = JSON.stringify(response.data.accessToken)
-        localStorage.setItem("token", token)
-        if (response.data.accessToken.role === 'HR') {
-          router.push("/hr/dashboard");
-        }
-        if(response.data.accessToken.role === 'LEAD'){
-          router.push("/leads/dashboard");
-
-        }
-        if(response.data.accessToken.role === 'DEVELOPER'){
-          router.push("employee/dashboard")
-        }
+        const userDetails = JSON.stringify(response.data.accessToken);
+        localStorage.setItem("token", userDetails);
+        router.push("/dashboard");
       })
-
       .catch((error) => {
         toast.error(error?.data?.message || "Login failed");
-      })
+      });
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {

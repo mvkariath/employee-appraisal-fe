@@ -31,7 +31,7 @@ interface Employee {
   role: string;
 }
 
-const token = localStorage.getItem("token")
+const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 const useDetails = token?JSON.parse(token):null
 
 interface AppraisalCycleModalProps {
@@ -93,8 +93,8 @@ const AppraisalCycleModal = ({
     if (!cycleName.trim()) newErrors.cycleName = "Cycle name is required.";
     if (!startDate) newErrors.startDate = "Start date is required.";
     if (!endDate) newErrors.endDate = "End date is required.";
-    if (startDate && startDate < today)
-      newErrors.startDate = "Start date cannot be in the past.";
+    //if (startDate && startDate < today)
+    //  newErrors.startDate = "Start date cannot be in the past.";
     if (startDate && endDate && startDate >= endDate)
       newErrors.endDate = "End date must be after start date.";
     if (selectedEmployees.length === 0)
