@@ -78,7 +78,9 @@ const IdpModal = ({ isOpen, onClose, appraisalId }: IdpModalProps) => {
         toast.error(error?.data?.message || "IDP update failed");
       });
     // toast.success("IDP changes saved (check console)");
+    onClose()
     setEditMode(false);
+
   };
 
   const handleCancel = () => {

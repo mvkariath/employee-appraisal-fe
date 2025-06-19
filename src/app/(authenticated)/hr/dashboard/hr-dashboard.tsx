@@ -32,6 +32,7 @@ import {
 import { AppraisalCycle } from "@/api-service/appraisalCycle/types";
 import { toast } from "sonner";
 import { formatDate, getProgressColorClass } from "@/components/functions";
+import { useGetMetricsQuery } from "@/api-service/dashboardMetrics/dashboardMetrics.api";
 
 const Index = () => {
   const router = useRouter();
@@ -46,6 +47,7 @@ const Index = () => {
   }>({ open: false, cycleId: null });
 
   const [updateCycle] = useUpdateCycleMutation();
+  const {data : metricsData} = useGetMetricsQuery()
 
   useEffect(() => {
     if (data) {
@@ -174,7 +176,7 @@ const Index = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-green-100">Total Employees</p>
-                  <p className="text-3xl font-bold">254</p>
+                  <p className="text-3xl font-bold">{metricsData.totalEmployees || 0}</p>
                 </div>
                 <Users className="h-8 w-8 text-green-200" />
               </div>
@@ -185,7 +187,7 @@ const Index = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-purple-100">Completed Reviews</p>
-                  <p className="text-3xl font-bold">23</p>
+                  <p className="text-3xl font-bold">{metricsData.completedAppraisals || 0}</p>
                 </div>
                 <CheckCircle2 className="h-8 w-8 text-purple-200" />
               </div>
@@ -196,7 +198,7 @@ const Index = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-orange-100">Pending Actions</p>
-                  <p className="text-3xl font-bold">31</p>
+                  <p className="text-3xl font-bold">{metricsData.pendingAppraisals || 0}</p>
                 </div>
                 <Clock className="h-8 w-8 text-orange-200" />
               </div>
@@ -241,9 +243,16 @@ const Index = () => {
                       />
                       <div className="flex gap-2 justify-between items-center">
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline">
+                          {cycle.status === 'COMPLETED' && (
+                            <Button size="sm" variant="outline"
+                            onClick={() =>
+                                router.push(
+                                  `hr/dashboard/past-appraisal/${cycle.id}`
+                                )
+                              }>
                             View Details
                           </Button>
+                          )}
                           {cycle.status !== "COMPLETED" && (
                             <Button
                               size="sm"

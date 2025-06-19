@@ -121,7 +121,7 @@ const AppraisalCycleModal = ({
 
   try {
     await createCycle(payload).unwrap();
-    toast("Appraisal cycle created successfully!");
+    toast.success("Appraisal cycle created successfully!");
 
     // Reset form
     setCycleName("");
@@ -132,7 +132,7 @@ const AppraisalCycleModal = ({
     onOpenChange(false);
   } catch (error) {
     console.error("Error creating cycle:", error);
-    toast("Failed to create appraisal cycle.");
+    toast.error("Failed to create appraisal cycle.");
   }
 };
 
