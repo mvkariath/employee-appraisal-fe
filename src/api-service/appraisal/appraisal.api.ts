@@ -34,9 +34,9 @@ export const appraisalApi = baseApi.injectEndpoints({
       invalidatesTags: ["APPRAISALS"],
     }),
 
-    updateAppraisal: builder.mutation<any, { id: number; data: any }>({
-      query: ({ id, data }) => ({
-        url: `/appraisal/${id}`,
+    updateAppraisal: builder.mutation<any, { appraisalId: number; data: any }>({
+      query: ({ appraisalId, data }) => ({
+        url: `/appraisal/${appraisalId}`,
         method: "PUT",
         body: data,
       }),

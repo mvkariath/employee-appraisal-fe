@@ -3,6 +3,13 @@ import baseApi from "../api";
 
 export const employeeApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    fillform: builder.mutation({
+      query: (payload) => ({
+        url: `/appraisal/${payload.id}`,
+        method: "PUT",
+        body: payload,
+      }),
+    }),    
     getEmployees: builder.query<Employee[], void>({
       query: () => "/employee",
       providesTags:['EMPLOYEES']
@@ -38,4 +45,4 @@ export const employeeApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useGetEmployeesQuery, useDeleteEmployeeMutation, useUpdateEmployeeMutation, useCreateEmployeeMutation, useGetEmployeeByIdQuery } = employeeApi;
+export const { useFillformMutation,useGetEmployeesQuery, useDeleteEmployeeMutation, useUpdateEmployeeMutation, useCreateEmployeeMutation, useGetEmployeeByIdQuery } = employeeApi;

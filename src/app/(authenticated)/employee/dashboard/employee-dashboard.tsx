@@ -123,7 +123,7 @@ console.log("All appraisals:", allAppraisals);
         )[0]
     : undefined;
 	  console.log("Most recent appraisal:", mostRecentAppraisal);
-  const currentAppraisal = pastAppraisals.find(
+  const currentAppraisal = allAppraisals.find(
     (a: any) => a.current_status !== "ALL_DONE"
   );
   const lastCompletedAppraisal = [...pastAppraisals]
@@ -137,8 +137,8 @@ console.log("All appraisals:", allAppraisals);
     ? currentAppraisal.current_status || currentAppraisal.current_status
     : "-";
 
-  const lastAppraisalDate = lastCompletedAppraisal
-    ? new Date(lastCompletedAppraisal.closed_at).toLocaleDateString()
+  const lastAppraisalDate = mostRecentAppraisal
+    ? new Date(mostRecentAppraisal.closed_at).toLocaleDateString()
     : "-";
   console.log("Last completed appraisal:", lastCompletedAppraisal);
 //   const mostRecentAppraisal = [...pastAppraisals]
@@ -204,7 +204,7 @@ console.log("All appraisals:", allAppraisals);
                 <div>
                   <p className="text-orange-100">Status</p>
                   <p className="text-3xl font-bold">
-                    {mostRecentAppraisal?.current_status || "NA"}
+                    {currentAppraisal?.current_status || "NA"}
                   </p>
                 </div>
                 <Clock className="h-8 w-8 text-orange-200" />

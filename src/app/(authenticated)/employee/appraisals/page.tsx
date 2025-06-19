@@ -18,38 +18,62 @@ import { GeminiAppraisalSummaryChat } from "../components/SummaryGenerator";
 import { useGetPastAppraisalsQuery } from "@/api-service/appraisal/appraisal.api";
 import { useGetEmployeeByIdQuery } from "@/api-service/employees/employee.api";
 import { useGetAppraisalByEmployeeIdQuery } from "@/api-service/appraisal/appraisal.api";
+import { useGetAppraisalByIdQuery } from "@/api-service/appraisal/appraisal.api";
 import { useUpdateAppraisalMutation } from "@/api-service/appraisal/appraisal.api";
+import { useFillformMutation } from "@/api-service/employees/employee.api";
 import { skipToken } from "@reduxjs/toolkit/query";
-import ChatBot from "../components/chatbot";
+import { useGetEmployeesQuery } from "@/api-service/employees/employee.api";
 // Mock data - same as your original
 function HRName({ id }: { id: number }) {
   const { data, isLoading } = useGetEmployeeByIdQuery({ id });
   if (isLoading) return <>Loading...</>;
   return <>{data?.name || "Unknown HR"}</>;
 }
+// Define defaultFormData for fallback usage in mapBackendAppraisalToFormData
+const defaultFormData = {
+  leadId: [],
+  selfAssessments: [
+    {
+      deliveryDetails: "",
+      accomplishments: "",
+      approaches: "",
+      improvements: "",
+      timeFrame: "",
+    },
+  ],
+  performanceFactors: [],
+  individualDevelopmentPlan: {
+    technical: "",
+    behavioral: "",
+    functional: "",
+  },
+  additionalRemarks: "",
+};
+
 function mapBackendAppraisalToFormData(appraisal: any) {
+  // If you store leadId in self_appraisal[0]
   const sa = appraisal.self_appraisal?.[0] || {};
-  // Extract lead names from appraisalLeads
-  const leadNames =
-    appraisal.appraisalLeads?.map((al: any) => al.lead?.name).filter(Boolean) || [];
+  const leadId = sa.leadId || [];
 
   return {
-    leadNames,
-    selfAssessments: [
-      {
-        deliveryDetails: sa.delivery_details || "",
-        accomplishments: sa.accomplishments || "",
-        approaches: sa.approach_solution || "",
-        improvements: sa.improvement_possibilities || "",
-        timeFrame: sa.project_time_frame || "",
-      },
-    ],
-    performanceFactors: (appraisal.performance_factors || []).map((pf: any) => ({
-      competency: pf.competency || "",
-      strengths: pf.strengths || "",
-      improvementNeeds: pf.improvements || "",
-      rating: pf.rating?.toString() || "",
-    })),
+    leadId: Array.isArray(leadId) ? leadId : [leadId],
+    selfAssessments: appraisal.self_appraisal
+      ? appraisal.self_appraisal.map((sa: any) => ({
+          deliveryDetails: sa.delivery_details || "",
+          accomplishments: sa.accomplishments || "",
+          approaches: sa.approach_solution || "",
+          improvements: sa.improvement_possibilities || "",
+          timeFrame: sa.project_time_frame || "",
+        }))
+      : [{ ...defaultFormData.selfAssessments[0] }],
+    performanceFactors: (appraisal.performance_factors || []).map(
+      (pf: any) => ({
+        competency: pf.competency || "",
+        strengths: pf.strengths || "",
+        improvementNeeds: pf.improvements || "",
+        rating: pf.rating?.toString() || "",
+      })
+    ),
     individualDevelopmentPlan: {
       technical:
         appraisal.idp?.find((i: any) => i.competency === "TECHNICAL")
@@ -64,12 +88,30 @@ function mapBackendAppraisalToFormData(appraisal: any) {
     additionalRemarks: appraisal.additionalRemarks || "",
   };
 }
-function mapEmployeeToModalData(employee: any): any {
+function mapEmployeeToModalData(employeeOrAppraisal: any): any {
+  // If it's a nested employee object (current appraisal)
+  if (
+    employeeOrAppraisal &&
+    employeeOrAppraisal.name &&
+    employeeOrAppraisal.employeeId
+  ) {
+    return {
+      name: employeeOrAppraisal.name || "",
+      designation: employeeOrAppraisal.role || "",
+      employeeNumber: employeeOrAppraisal.employeeId || "",
+      team: employeeOrAppraisal.department || "",
+    };
+  }
+  // If it's a past appraisal object (summary fields)
   return {
-    name: employee?.name || "",
-    designation: employee?.role || "",
-    employeeNumber: employee?.employeeId || "",
-    team: employee?.department || "",
+    name: employeeOrAppraisal.employee_name || "",
+    designation:
+      employeeOrAppraisal.designation || employeeOrAppraisal.role || "",
+    employeeNumber:
+      employeeOrAppraisal.employeeId ||
+      employeeOrAppraisal.id?.toString() ||
+      "",
+    team: employeeOrAppraisal.department || "",
   };
 }
 function getAverageRating(performanceFactors: any[]): string {
@@ -98,6 +140,7 @@ function getProgressForStatus(status: string): number {
 function mapBackendStatusToUI(
   status: string
 ): "pending" | "completed" | "overdue" {
+  // console.log("Mapping status:", status);
   if (status === "ALL_DONE") return "completed";
   if (
     status === "INITIATED" ||
@@ -111,218 +154,11 @@ function mapBackendStatusToUI(
   // Add more mappings as needed
   return "pending";
 }
-const initialAppraisals = [
-  {
-    id: 1,
-    period: "Q2 2024",
-    status: "pending",
-    progress: 60,
-    hr: "John Smith",
-    dueDate: "2024-06-30",
-    requiresSelfAppraisal: true,
-    rating: null,
-    employeeData: {
-      name: "Sarah Johnson",
-      designation: "Senior Developer",
-      employeeNumber: "EMP-2045",
-      team: "Product Development",
-    },
-    selfAppraisal: null,
-    submitted: false,
-  },
-  {
-    id: 2,
-    period: "Q1 2024",
-    status: "completed",
-    progress: 100,
-    hr: "John Smith",
-    dueDate: "2024-03-31",
-    requiresSelfAppraisal: true,
-    rating: 8.5,
-    employeeData: {
-      name: "Sarah Johnson",
-      designation: "Senior Developer",
-      employeeNumber: "EMP-2045",
-      team: "Product Development",
-    },
-    selfAppraisal: {
-      leadNames: ["Mike Chen", "Lisa Park"],
-      deliveryDetails: [
-        "Implemented new authentication system",
-        "Optimized database queries",
-        "Led team onboarding sessions",
-      ],
-      accomplishments: [
-        "Reduced API response time by 40%",
-        "Mentored 2 junior developers",
-        "Documented key processes",
-      ],
-      approaches: [
-        "Used JWT for secure authentication",
-        "Added proper indexing to queries",
-        "Created structured onboarding plan",
-      ],
-      improvements: [
-        "Better documentation standards",
-        "More thorough code reviews",
-        "Faster onboarding process",
-      ],
-      timeFrames: ["March 2024", "February 2024", "January 2024"],
-    },
-    performanceFactors: [
-      {
-        competency: "Technical",
-        strengths: "Excellent problem-solving skills, strong coding abilities",
-        improvementNeeds: "Could document solutions better",
-        rating: "9",
-      },
-      {
-        competency: "Functional",
-        strengths: "Deep understanding of business requirements",
-        improvementNeeds: "Need to think more strategically",
-        rating: "8",
-      },
-      {
-        competency: "Communication",
-        strengths: "Clear in written communication",
-        improvementNeeds: "More assertive in meetings",
-        rating: "7",
-      },
-      {
-        competency: "Energy & Drive",
-        strengths: "Consistently motivated",
-        improvementNeeds: "Better work-life balance",
-        rating: "8",
-      },
-      {
-        competency: "Responsibilities & Trust",
-        strengths: "Reliable and dependable",
-        improvementNeeds: "Could take more initiative",
-        rating: "9",
-      },
-      {
-        competency: "Teamwork",
-        strengths: "Collaborative and supportive",
-        improvementNeeds: "Could mentor more junior staff",
-        rating: "8",
-      },
-      {
-        competency: "Managing Processes & Work",
-        strengths: "Good at task prioritization",
-        improvementNeeds: "Better at estimating timelines",
-        rating: "7",
-      },
-    ],
-    individualDevelopmentPlan: {
-      technical: "Complete AWS certification by Q3 2024",
-      behavioral: "Improve public speaking skills",
-      functional: "Take on more architectural responsibilities",
-    },
-    additionalRemarks:
-      "I particularly enjoyed working on the authentication system and would like to take on more security-related tasks in the future.",
-    submitted: true,
-  },
-  {
-    id: 3,
-    period: "Q4 2023",
-    status: "completed",
-    progress: 100,
-    hr: "Sarah Johnson",
-    dueDate: "2023-12-31",
-    requiresSelfAppraisal: true,
-    rating: 7.8,
-    employeeData: {
-      name: "Sarah Johnson",
-      designation: "Senior Developer",
-      employeeNumber: "EMP-2045",
-      team: "Product Development",
-    },
-    selfAppraisal: {
-      leadNames: ["Mike Chen"],
-      deliveryDetails: [
-        "Q4 feature rollout",
-        "Documentation overhaul",
-        "Client demo preparation",
-      ],
-      accomplishments: [
-        "Delivered features on time",
-        "Improved documentation by 30%",
-        "Received positive client feedback",
-      ],
-      approaches: [
-        "Agile development methodology",
-        "Created documentation templates",
-        "Prepared detailed demo scenarios",
-      ],
-      improvements: [
-        "More detailed documentation",
-        "Better time estimation",
-        "More proactive communication",
-      ],
-      timeFrames: ["October - December 2023", "November 2023", "December 2023"],
-    },
-    performanceFactors: [
-      {
-        competency: "Technical",
-        strengths: "Solid implementation skills",
-        improvementNeeds: "Need to learn new testing frameworks",
-        rating: "8",
-      },
-      {
-        competency: "Functional",
-        strengths: "Good at requirements analysis",
-        improvementNeeds: "Should understand business context better",
-        rating: "7",
-      },
-      {
-        competency: "Communication",
-        strengths: "Good listener",
-        improvementNeeds: "More confident in presentations",
-        rating: "7",
-      },
-      {
-        competency: "Energy & Drive",
-        strengths: "Consistent performer",
-        improvementNeeds: "More innovative thinking",
-        rating: "7",
-      },
-      {
-        competency: "Responsibilities & Trust",
-        strengths: "Takes ownership of tasks",
-        improvementNeeds: "Should flag risks earlier",
-        rating: "8",
-      },
-      {
-        competency: "Teamwork",
-        strengths: "Helpful team player",
-        improvementNeeds: "Could lead more team activities",
-        rating: "8",
-      },
-      {
-        competency: "Managing Processes & Work",
-        strengths: "Good at following processes",
-        improvementNeeds: "Should suggest process improvements",
-        rating: "7",
-      },
-    ],
-    individualDevelopmentPlan: {
-      technical: "Learn React testing library",
-      behavioral: "Improve presentation skills",
-      functional: "Understand business metrics better",
-    },
-    additionalRemarks:
-      "The Q4 project was challenging but rewarding. I learned a lot about client requirements and expectations.",
-    submitted: true,
-  },
-];
 
-const leadOptions = [
-  "Mike Chen",
-  "Lisa Park",
-  "John Smith",
-  "Emma Wilson",
-  "David Brown",
-];
+// const leadOptions = [
+//   { id: 1, name: "Mike Chen" },
+//   { id: 2, name: "Lisa Park" },
+// ];
 
 type AppraisalStatus =
   | "NA"
@@ -346,11 +182,20 @@ const statusColors = {
 
 export default function AppraisalsPage() {
   // FIXED: Use a single appraisals state array instead of separate current/past
-  const [appraisals, setAppraisals] = useState(initialAppraisals);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingAppraisal, setViewingAppraisal] = useState<any>(null);
   const [draftData, setDraftData] = useState<any>(null);
+  const { data: employees = [], isLoading: employeesLoading } =
+    useGetEmployeesQuery();
+  const leadOptions = employees
+    .filter((emp) => emp.role === "LEAD")
+    .map((emp) => ({ id: emp.id, name: emp.name }));
+  console.log("Lead Options:", leadOptions);
+  // const [selectedAppraisalId, setSelectedAppraisalId] = useState<number | null>(
+  //   null
+  // );
+
   let employeeId: number | null = null;
   if (typeof window !== "undefined") {
     const tokenStr = localStorage.getItem("token");
@@ -382,6 +227,10 @@ export default function AppraisalsPage() {
     error,
   } = useGetPastAppraisalsQuery(employeeId ? employeeId : skipToken);
   console.log("Past Appraisals:", pastAppraisals);
+  //   const { data: fullAppraisal, isLoading: isFullLoading } = useGetAppraisalByIdQuery(
+  //   selectedAppraisalId ?? skipToken
+  // );
+  // console.log("Full appraisal fetched:", fullAppraisal, "for id", selectedAppraisalId);
   //   const hrIds = Array.from(
   //   new Set(
   //     pastAppraisals
@@ -398,54 +247,46 @@ export default function AppraisalsPage() {
 
   // const hrIdToName = Object.fromEntries(hrDetails.map((hr) => [hr.id, hr.name]));
 
-// FIXED: Update the appraisals array instead of just currentAppraisal
-const [updateAppraisal] = useUpdateAppraisalMutation();
-  const handleSubmitSelfAppraisal = async (formData: any, action: "save" | "submit") => {
-    if (!currentAppraisal) return;
-    try {
-      await updateAppraisal({
-        id: currentAppraisal.id,
-        data: {
-          self_appraisal: [
-            {
-              delivery_details: formData.selfAssessments[0].deliveryDetails,
-              accomplishments: formData.selfAssessments[0].accomplishments,
-              approach_solution: formData.selfAssessments[0].approaches,
-              improvement_possibilities: formData.selfAssessments[0].improvements,
-              project_time_frame: formData.selfAssessments[0].timeFrame,
-            },
-          ],
-          // Add other fields as needed
-          // Indicate draft or submitted
-          isDraft: action === "save",
-          isSubmitted: action === "submit",
-          current_status: action === "submit" ? "SELF_APPRAISED" : currentAppraisal.current_status,
-        },
-      }).unwrap();
+  // FIXED: Update the appraisals array instead of just currentAppraisal
+  const [updateAppraisal] = useUpdateAppraisalMutation();
+  const [fillForm] = useFillformMutation();
+  // console.log(viewingAppraisal);
 
-      setIsModalOpen(false);
-      if (action === "save") {
-        alert("Draft saved successfully!");
-      } else {
-        alert("Self-appraisal submitted successfully!");
-      }
-    } catch (err) {
-      alert("Failed to save/submit appraisal. Please try again.");
-    }
+  const handleSubmitSelfAppraisal = async (
+    formData: any,
+    action: "draft" | "submit"
+  ) => {
+    if (!currentAppraisal) return;
+    const update_payload = {
+      appraisalId: currentAppraisal.id,
+      data: {
+        appraisalLeads: formData.leadId,
+        self_appraisal: formData.selfAssessments.map((a: any) => ({
+          delivery_details: a.deliveryDetails,
+          accomplishments: a.accomplishments,
+          approach_solution: a.approaches,
+          improvement_possibilities: a.improvements,
+          project_time_frame: a.timeFrame,
+          leadId: formData.leadId,
+        })),
+        save_type: "submit",
+        // appraisalStatus: action === "draft" ? "SELF_APPRAISED" : "INITIATE_FEEDBACK",
+      
+      },
+      
+    };
+
+    await updateAppraisal(update_payload);
+    setIsModalOpen(false);
   };
 
+  // const [viewingAppraisal, setViewingAppraisal] = useState<any>(null);
   const handleViewAppraisal = (appraisal: any) => {
-  if (!appraisal) return;
-
-  // Transform backend self_appraisal array to FormData
-  setViewingAppraisal({
-    ...appraisal,
-    selfAppraisal: mapBackendAppraisalToFormData(appraisal),
-  });
-  setIsViewModalOpen(true);
-  setIsViewModalOpen(true);
-};
-
+    console.log("Selected appraisal for view:", appraisal);
+    setViewingAppraisal(appraisal);
+    setIsViewModalOpen(true);
+  };
+  // console.log("Current Appraisal:", currentAppraisal);
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">My Appraisals</h1>
@@ -516,7 +357,8 @@ const [updateAppraisal] = useUpdateAppraisalMutation();
               {currentAppraisal && (
                 <div className="flex gap-3 mt-3">
                   {currentAppraisal.self_appraisal &&
-                  currentAppraisal.self_appraisal.length > 0 ? (
+                  currentAppraisal.self_appraisal.length > 0 &&
+                  currentAppraisal.current_status === "SELF_APPRAISED" ? (
                     <Button
                       variant="outline"
                       onClick={() => handleViewAppraisal(currentAppraisal)}
@@ -550,7 +392,7 @@ const [updateAppraisal] = useUpdateAppraisalMutation();
               <Card key={appraisal.id}>
                 <CardHeader className="border-b">
                   <div className="flex justify-between items-center">
-                    <CardTitle>{appraisal.cycle.name}</CardTitle>
+                    <CardTitle>{appraisal.cycle_name}</CardTitle>
                     <div className="flex items-center gap-3">
                       <Badge
                         className={
@@ -573,7 +415,10 @@ const [updateAppraisal] = useUpdateAppraisalMutation();
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleViewAppraisal(appraisal)}
+                        onClick={() => {
+                          // console.log("Viewing appraisal:", appraisal);
+                          handleViewAppraisal(appraisal);
+                        }}
                       >
                         View Details
                       </Button>
@@ -586,11 +431,14 @@ const [updateAppraisal] = useUpdateAppraisalMutation();
                       <p className="text-sm text-gray-500">HR</p>
                       {/* <p className="font-medium"> {hrIdToName[appraisal.cycle?.created_by] || "Loading..."}</p>
                        */}
-                      {appraisal.cycle?.created_by?.id ? (
-                        <HRName id={appraisal.cycle.created_by.id} />
+                      {appraisal?.created_by ? (
+                        <HRName id={appraisal.created_by.id} />
                       ) : (
                         "N/A"
                       )}
+                      {/* <p className="font-medium">
+                        {appraisal?.created_by || "N/A"}</p>
+                    // </div> */}
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Completed On</p>
@@ -648,13 +496,19 @@ const [updateAppraisal] = useUpdateAppraisalMutation();
           onSubmit={handleSubmitSelfAppraisal}
           employeeData={mapEmployeeToModalData(currentAppraisal.employee)}
           leadOptions={leadOptions}
-          initialData={draftData}
-          isReadOnly={!!(currentAppraisal.self_appraisal && currentAppraisal.self_appraisal.length > 0 && currentAppraisal.current_status === "SELF_APPRAISED")}
+          initialData={mapBackendAppraisalToFormData(currentAppraisal)}
+          isReadOnly={
+            !!(
+              currentAppraisal.self_appraisal &&
+              currentAppraisal.self_appraisal.length > 0 &&
+              currentAppraisal.current_status === "SELF_APPRAISED"
+            )
+          }
         />
       )}
 
       {/* View Submitted Appraisal Modal */}
-      {viewingAppraisal && (
+      {isViewModalOpen && viewingAppraisal && (
         <EmployeeSelfAppraisalModal
           key={`view-modal-${viewingAppraisal.id}`}
           isOpen={isViewModalOpen}
@@ -663,11 +517,10 @@ const [updateAppraisal] = useUpdateAppraisalMutation();
             setViewingAppraisal(null);
           }}
           onSubmit={() => {}}
-          employeeData={mapEmployeeToModalData(viewingAppraisal.employee)}
+          employeeData={mapEmployeeToModalData(viewingAppraisal)}
           leadOptions={leadOptions}
           isReadOnly={true}
-          initialData={viewingAppraisal.selfAppraisal}
-
+          initialData={mapBackendAppraisalToFormData(viewingAppraisal)}
         />
       )}
     </div>

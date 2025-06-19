@@ -22,9 +22,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, X } from "lucide-react";
-import ChatBot from "./chatbot";
+
 import { MessageCircle } from "lucide-react";
-import ChatBotLauncher from "./chatbotlauncher";
+
 interface EmployeeData {
   name: string;
   designation: string;
@@ -52,9 +52,12 @@ interface IndividualDevelopmentPlan {
   behavioral: string;
   functional: string;
 }
-
+interface LeadOption {
+  id: number;
+  name: string;
+}
 interface FormData {
-  leadNames: string[];
+  leadId: number[];
   selfAssessments: SelfAssessment[];
   performanceFactors: PerformanceFactor[];
   individualDevelopmentPlan: IndividualDevelopmentPlan;
@@ -64,16 +67,16 @@ interface FormData {
 interface EmployeeSelfAppraisalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: FormData, action: "save" | "submit") => void;
+  onSubmit: (data: FormData, action: "draft" | "submit") => void;
   employeeData: EmployeeData;
-  leadOptions: string[];
+  leadOptions: LeadOption[];
   isReadOnly?: boolean;
   initialData?: FormData;
   isSubmitted?: boolean;
 }
 
 const defaultFormData: FormData = {
-  leadNames: [],
+  leadId: [],
   selfAssessments: [
     {
       deliveryDetails: "",
@@ -143,11 +146,12 @@ export default function EmployeeSelfAppraisalModal({
   const [formData, setFormData] = useState<FormData>({ ...defaultFormData });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [showChat, setShowChat] = useState(false);
+  console.log(employeeData);
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
         setFormData({
-          leadNames: [...(initialData.leadNames || [])],
+          leadId: [...(initialData.leadId || [])],
           selfAssessments: initialData.selfAssessments?.map((assessment) => ({
             ...assessment,
           })) || [{ ...defaultFormData.selfAssessments[0] }],
@@ -171,8 +175,8 @@ export default function EmployeeSelfAppraisalModal({
     const newErrors: { [key: string]: string } = {};
 
     // Lead selection
-    if (formData.leadNames.length === 0) {
-      newErrors.leadNames = "At least one lead must be selected";
+    if (formData.leadId.length === 0) {
+      newErrors.leadId = "At least one lead must be selected";
     }
 
     // Self Assessments
@@ -311,36 +315,36 @@ export default function EmployeeSelfAppraisalModal({
     });
   };
 
-  const handleLeadSelection = (leadName: string, checked: boolean) => {
+  const handleLeadSelection = (leadId: number, checked: boolean) => {
     setFormData((prev) => {
-      const updatedLeadNames = checked
-        ? [...prev.leadNames, leadName]
-        : prev.leadNames.filter((name) => name !== leadName);
+      const updatedleadId = checked
+        ? [...prev.leadId, leadId]
+        : prev.leadId.filter((id) => id !== leadId);
       return {
         ...prev,
-        leadNames: updatedLeadNames,
+        leadId: updatedleadId,
       };
     });
     setErrors((prev) => {
       const newErrors = { ...prev };
-      delete newErrors.leadNames;
+      delete newErrors.leadId;
       return newErrors;
     });
   };
 
-  const removeLead = (leadName: string) => {
+  const removeLead = (leadId: number) => {
     setFormData((prev) => ({
       ...prev,
-      leadNames: prev.leadNames.filter((name) => name !== leadName),
+      leadId: prev.leadId.filter((id) => id !== leadId),
     }));
   };
 
-  const handleSubmitForm = (action: "save" | "submit") => {
+  const handleSubmitForm = (action: "draft" | "submit") => {
     if (action === "submit" && !validateForm()) {
       return;
     }
     const dataToSubmit: FormData = {
-      leadNames: [...formData.leadNames],
+      leadId: [...formData.leadId],
       selfAssessments: formData.selfAssessments.map((assessment) => ({
         ...assessment,
       })),
@@ -356,7 +360,7 @@ export default function EmployeeSelfAppraisalModal({
   const handleClose = () => {
     onClose();
   };
-
+  console.log("Form Data:", formData);
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="!max-w-none !w-[90vw] !h-[90vh] overflow-y-auto">
@@ -383,72 +387,62 @@ export default function EmployeeSelfAppraisalModal({
             <Label className="text-gray-500">Employee Number</Label>
             <p className="font-medium">{employeeData.employeeNumber}</p>
           </div>
-          <div>
-            <Label className="text-gray-500">Team</Label>
-            <p className="font-medium">{employeeData.team}</p>
-          </div>
         </div>
 
         {/* Lead Selection */}
         <div className="mb-6">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold mb-2">Select Lead(s)</h3>
+            {/* {!isReadOnly && ( */}
             {!isReadOnly && (
+            <>
+              <h3 className="text-lg font-semibold mb-2">Select Lead(s)</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-4 bg-gray-50 rounded-lg">
                 {leadOptions.map((lead) => (
-                  <div key={lead} className="flex items-center space-x-2">
+                  <div key={lead.id} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`lead-${lead}`}
-                      checked={formData.leadNames.includes(lead)}
+                      id={`lead-${lead.id}`}
+                      checked={formData.leadId.includes(lead.id)}
                       onCheckedChange={(checked) =>
-                        handleLeadSelection(lead, checked as boolean)
+                        handleLeadSelection(lead.id, checked as boolean)
                       }
                     />
                     <Label
-                      htmlFor={`lead-${lead}`}
+                      htmlFor={`lead-${lead.id}`}
                       className="text-sm font-medium"
                     >
-                      {lead}
+                      {lead.name}
                     </Label>
                   </div>
                 ))}
               </div>
+            </>
             )}
-            {errors.leadNames && (
-              <p className="text-xs text-red-500 mt-1">{errors.leadNames}</p>
+            {errors.leadId && (
+              <p className="text-xs text-red-500 mt-1">{errors.leadId}</p>
             )}
             {/* Selected Leads Display */}
-            {formData.leadNames.length > 0 && (
+            {formData.leadId.length > 0 && (
               <div className="mt-3">
                 <Label className="text-sm text-gray-600">
                   Selected Lead(s):
                 </Label>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {formData.leadNames.map((leadName) => (
-                    <Badge
-                      key={leadName}
-                      variant="secondary"
-                      className="flex items-center gap-1"
-                    >
-                      {leadName}
-                      {!isReadOnly && (
-                        <X
-                          className="h-3 w-3 cursor-pointer hover:text-red-500"
-                          onClick={() => removeLead(leadName)}
-                        />
-                      )}
-                    </Badge>
-                  ))}
+                  {formData.leadId.map((id) => {
+                    const lead = leadOptions.find((l) => l.id === id);
+                    return <Badge key={id}>{lead?.name || id}</Badge>;
+                  })}
                 </div>
+                
               </div>
+              
             )}
-            {formData.leadNames.length === 0 && (
+            {/* {formData.leadId.length === 0 && (
               <p className="text-sm text-gray-500 mt-2">
                 {isReadOnly
                   ? "No leads selected"
                   : "Please select at least one lead"}
               </p>
-            )}
+            )} */}
           </div>
         </div>
 
@@ -900,7 +894,7 @@ export default function EmployeeSelfAppraisalModal({
               <>
                 <Button
                   variant="outline"
-                  onClick={() => handleSubmitForm("save")}
+                  onClick={() => handleSubmitForm("draft")}
                   type="button"
                 >
                   Save Draft
@@ -920,8 +914,8 @@ export default function EmployeeSelfAppraisalModal({
           </div>
         )}
         <div>
-        {/* Floating Chatbot Button */}
-        {/* {!showChat && (
+          {/* Floating Chatbot Button */}
+          {/* {!showChat && (
           <Button
             className="fixed bottom-10 right-10 z-50 rounded-full shadow-lg h-12 w-12 p-0 flex items-center justify-center"
             onClick={() => setShowChat(true)}
@@ -933,8 +927,8 @@ export default function EmployeeSelfAppraisalModal({
           </Button>
         )} */}
 
-        {/* Chatbot Panel inside Modal */}
-        {/* {showChat && (
+          {/* Chatbot Panel inside Modal */}
+          {/* {showChat && (
           <div className="fixed bottom-24 right-10 z-50 w-80">
             <ChatBot />
             <Button
@@ -947,9 +941,8 @@ export default function EmployeeSelfAppraisalModal({
             </Button>
           </div>
         )} */}
-      </div>
+        </div>
       </DialogContent>
-      
     </Dialog>
   );
 }
