@@ -89,7 +89,16 @@ function mapBackendAppraisalToFormData(appraisal: any) {
   };
 }
 function mapEmployeeToModalData(employeeOrAppraisal: any): any {
-  // If it's a nested employee object (current appraisal)
+  // If it's an appraisal object with an employee field
+  if (employeeOrAppraisal && employeeOrAppraisal.employee) {
+    return {
+      name: employeeOrAppraisal.employee.name || "",
+      designation: employeeOrAppraisal.employee.role || "",
+      employeeNumber: employeeOrAppraisal.employee.employeeId || "",
+      team: employeeOrAppraisal.employee.department || "",
+    };
+  }
+  // If it's a nested employee object
   if (
     employeeOrAppraisal &&
     employeeOrAppraisal.name &&
@@ -102,7 +111,7 @@ function mapEmployeeToModalData(employeeOrAppraisal: any): any {
       team: employeeOrAppraisal.department || "",
     };
   }
-  // If it's a past appraisal object (summary fields)
+  // Fallback for other shapes
   return {
     name: employeeOrAppraisal.employee_name || "",
     designation:
@@ -251,7 +260,12 @@ export default function AppraisalsPage() {
   const [updateAppraisal] = useUpdateAppraisalMutation();
   const [fillForm] = useFillformMutation();
   // console.log(viewingAppraisal);
-
+  const {
+  data: newAppraisals = [],
+  isLoading: isCurrentlyLoading,
+  error: newError,
+  refetch: refetchAppraisals, // <--- add this
+} = useGetAppraisalByEmployeeIdQuery(employeeId ? employeeId : skipToken);
   const handleSubmitSelfAppraisal = async (
     formData: any,
     action: "draft" | "submit"
@@ -277,6 +291,7 @@ export default function AppraisalsPage() {
     };
 
     await updateAppraisal(update_payload);
+    await refetchAppraisals();
     setIsModalOpen(false);
   };
 

@@ -143,6 +143,7 @@ export default function EmployeeSelfAppraisalModal({
   initialData,
   isSubmitted = false,
 }: EmployeeSelfAppraisalModalProps) {
+   const [showPopup, setShowPopup] = useState<null | string>(null);
   const [formData, setFormData] = useState<FormData>({ ...defaultFormData });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [showChat, setShowChat] = useState(false);
@@ -355,6 +356,8 @@ export default function EmployeeSelfAppraisalModal({
       additionalRemarks: formData.additionalRemarks,
     };
     onSubmit(dataToSubmit, action);
+    setShowPopup(action === "draft" ? "Draft saved successfully!" : "Form submitted successfully!");
+      setTimeout(() => setShowPopup(null), 2000);
   };
 
   const handleClose = () => {
@@ -362,6 +365,7 @@ export default function EmployeeSelfAppraisalModal({
   };
   console.log("Form Data:", formData);
   return (
+    
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="!max-w-none !w-[90vw] !h-[90vh] overflow-y-auto">
         {/* <ChatBotLauncher/> */}
@@ -638,7 +642,7 @@ export default function EmployeeSelfAppraisalModal({
         </div>
 
         {/* 2. Performance Factors - Only show if submitted or read-only */}
-        {(isSubmitted || isReadOnly) && (
+        {(!isReadOnly) && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold mb-4">
               2. Performance Factors
@@ -757,7 +761,7 @@ export default function EmployeeSelfAppraisalModal({
         )}
 
         {/* 3. Individual Development Plan - Only show if submitted or read-only */}
-        {(isSubmitted || isReadOnly) && (
+        {(!isReadOnly) && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold mb-4">
               3. Individual Development Plan (IDP)
@@ -863,7 +867,7 @@ export default function EmployeeSelfAppraisalModal({
         )}
 
         {/* 4. Additional Remarks - Only show if submitted or read-only */}
-        {(isSubmitted || isReadOnly) && (
+        {(!isReadOnly) && (
           <div className="mb-6">
             <h3 className="text-lg font-semibold mb-2">
               4. Additional Remarks
