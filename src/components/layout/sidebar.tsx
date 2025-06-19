@@ -7,15 +7,58 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const navItems = [
-  { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Employees", href: "/employees", icon: Users },
-  { name: "My Appraisals", href: "/appraisals", icon: FileText },
-  { name: "Settings", href: "/settings", icon: Settings },
-  { name: "Approvals", href: "/settings", icon: Settings },
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+    icon: Home,
+    roles: ["HR", "DEVELOPER", "LEAD"],
+  },
+  // {
+  //   name: "Employees",
+  //   href: "/employees",
+  //   icon: Users,
+  //   roles: ["HR", "DEVELOPER"],
+  // },
+  {
+    name: "My Appraisals",
+    href: "/employee/appraisals",
+    icon: FileText,
+    roles: ["DEVELOPER"],
+  },
+  // {
+  //   name: "Settings",
+  //   href: "/settings",
+  //   icon: Settings,
+  //   roles: ["HR", "DEVELOPER", "LEAD"],
+  // },
+  // { name: "Approvals", href: "/approvals", icon: Settings, roles: ["LEAD"] },
 ];
+
+function getRoleFromLocalStorage() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const storedToken = localStorage.getItem("token");
+  if (!storedToken) {
+    return null;
+  }
+  try {
+    const userDetails = JSON.parse(storedToken);
+    return userDetails?.role || null;
+  } catch (error) {
+    console.error("Failed to parse token from localStorage", error);
+    return null;
+  }
+}
 
 export function Sidebar() {
   const pathname = usePathname();
+  const role = getRoleFromLocalStorage();
+
+  const filteredNavItems = navItems.filter((item) => {
+    if (!role) return false;
+    return item.roles.includes(role);
+  });
 
   return (
     <>
@@ -28,7 +71,7 @@ export function Sidebar() {
         </SheetTrigger>
         <SheetContent side="left" className="sm:max-w-xs">
           <nav className="grid gap-6 text-lg font-medium">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
@@ -56,7 +99,7 @@ export function Sidebar() {
           </div>
           <div className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-              {navItems.map((item) => (
+              {filteredNavItems.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
