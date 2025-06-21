@@ -7,6 +7,7 @@ import {EmployeeAppraisal } from "@/types/index"; // Adjust the import path as n
 import { useRouter } from "next/navigation";
 import { use } from "react";
 import { EmployeeData } from "@/api-service/leads/types";
+import { formatDate } from "../functions";
 
 
 
@@ -16,7 +17,28 @@ const statusColor = {
   "In Progress": "secondary",
   "Completed": "default"
 } as const;
-
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "NA":
+        return "bg-red-100 text-red-800";
+      case "INITIATED":
+        return "bg-red-100 text-red-800";
+      case "SELF_APPRAISED":
+        return "bg-blue-100 text-blue-800";
+      case "INITIATE_FEEDBACK":
+        return "bg-gray-100 text-gray-800";
+      case "FEEDBACK_SUBMITTED":
+        return "bg-blue-100 text-blue-800";
+      case "MEETING_DONE":
+        return "bg-yellow-100 text-yellow-800";
+      case "DONE":
+        return "bg-purple-100 text-purple-800";
+      case "ALL_DONE":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
 export const EmployeeAppraisalsTable = ({ appraisals}  :{ appraisals:EmployeeData[]|undefined}) => {
   const router=useRouter();
    const handleViewAppraisal = (appraisalId:number) => {
@@ -24,42 +46,40 @@ export const EmployeeAppraisalsTable = ({ appraisals}  :{ appraisals:EmployeeDat
   }
 
   return (
-   <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Employee</TableHead>
-              <TableHead>Due Date</TableHead>
+   <Table >
+          <TableHeader >
+            <TableRow >
+              <TableHead>Name</TableHead>
+               <TableHead>Team</TableHead>
+                <TableHead>Name</TableHead>
+              <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Progress</TableHead>
-              <TableHead />
+              <TableHead>Start date</TableHead>
+             <TableHead>Due Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {appraisals?.map((appraisal:EmployeeData) => (
-              <TableRow key={appraisal.name}>
-                <TableCell>{appraisal.department}</TableCell>
-                <TableCell>moment(appraisal.endDate).format('Do MM YYYY')</TableCell>
-                <TableCell>
-                  {/* <Badge variant={
-                    appraisal.status === "completed"
-                      ? "success"
-                      : appraisal.status === "in_progress"
-                        ? "secondary"
-                        : "outline"
-                  }>
-                    {appraisal.status.replace("_", " ")}
-                  </Badge> */}
+              <TableRow key={appraisal.appraisalId}>
+                <TableCell>{appraisal.employee.name}</TableCell>
+                <TableCell>{appraisal.employee.department}</TableCell>
+              
+               <TableCell>
+                 {appraisal.employee.role} 
+               </TableCell>
+                 <TableCell>
+                    <Badge className={getStatusColor(appraisal.appraisalStatus)}>
+                      {appraisal.appraisalStatus}
+                    </Badge>
                 </TableCell>
-                {/* <TableCell className="w-[200px]">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>{appraisal.progress}%</span>
-                    </div>
-                    <Progress value={appraisal.progress} />
-                  </div>
-                </TableCell> */}
+               <TableCell>
+              {formatDate(appraisal.startDate)}
+              
+                             
+               </TableCell>
+               <TableCell>  {formatDate(appraisal.endDate)}</TableCell>
                 <TableCell>
-                  <Button size="sm" onClick={() => handleViewAppraisal(appraisal.appraisalId)}>
+                  <Button size="sm" className="bg-white text-black" onClick={() => handleViewAppraisal(appraisal.appraisalId)}>
                     View
                   </Button>
                 </TableCell>

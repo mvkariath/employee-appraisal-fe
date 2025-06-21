@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { EmployeeAppraisalCard } from  "@/components/leads/EmployeeAppraisalCard"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Grid, LayoutGrid, List ,TableIcon} from "lucide-react"
 import clsx from "clsx"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { EmployeeAppraisalsTable } from "@/components/leads/EmployeeAppraisalsTable"
 
 import { useGetLeadsQuery } from "@/api-service/leads/leads.api"
@@ -24,9 +24,11 @@ import { EmployeeData } from "@/api-service/leads/types"
 
 export default function AppraisalsPage() {
   const [view, setView] = useState<"card" | "table">("card")
+    const searchParams = useSearchParams();
+  const filterStatus = searchParams.get('status'); 
   const router = useRouter()
  const [userId, setUserId] = useState<number| null>(null);
-  const [pendingAppraisals,setPendingAppraisals] = useState<EmployeeData[]>([]);
+
    useEffect(() => {
      const token = localStorage.getItem("token");
      if (token) {
@@ -39,12 +41,16 @@ export default function AppraisalsPage() {
      }
    }, []);
 
-  const {data, isLoading} = useGetLeadsQuery({id:userId})
-  useEffect(()=>{
-    if(data && data.length>0){
-      setPendingAppraisals(data)
-    }
-  })
+  const {data, isLoading} = useGetLeadsQuery({id:userId},{skip:!userId})
+    const filteredAppraisals = useMemo(() => {
+    if (!data) return [];
+
+    if (!filterStatus) return data; // no filter, return all
+
+    return data.filter(
+      (item) => item.appraisalStatus === filterStatus
+    );
+  }, [data, filterStatus]);
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -65,7 +71,7 @@ export default function AppraisalsPage() {
               size="sm"
               onClick={() => setView("card")}
             >
-              <Grid className="h-4 w-4 mr-2" />
+              <Grid className="h-4 w-4 mr-2 " />
               Card View
             </Button>
             <Button
@@ -83,12 +89,12 @@ export default function AppraisalsPage() {
     
       {!isLoading && (view === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {pendingAppraisals?.map((appraisal) => (
+          {filteredAppraisals?.map((appraisal) => (
             <EmployeeAppraisalCard key={appraisal.id} appraisal={appraisal} />
           ))}
         </div>
       ) : (
-        <EmployeeAppraisalsTable appraisals={pendingAppraisals} />
+        <EmployeeAppraisalsTable appraisals={filteredAppraisals} />
       ))}
       </div>
    

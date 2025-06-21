@@ -23,6 +23,13 @@ export const leadsApi = baseApi.injectEndpoints({
         method: 'GET'
       })
     }),
+    getCompletedAppraisals:builder.query<EmployeeData[], {id:number}>({
+      query: ({id}) => ({
+        url: `/self-appraisal/get-completed-appraisals-of-lead/${id}`,
+        method: 'GET'
+      }),
+      providesTags: ['LEADS']
+    }),
 
     // CreateEmployee: builder.mutation({
     //   query: (payload) => ({
@@ -50,4 +57,4 @@ export const leadsApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useGetAppraisalByIdQuery,useGetLeadsQuery ,useUpdatePerformanceFactorMutation,useGetPastAppraisalByEmployeeIdQuery} = leadsApi;
+export const { useGetAppraisalByIdQuery,useGetLeadsQuery ,useUpdatePerformanceFactorMutation ,useGetCompletedAppraisalsQuery,useGetPastAppraisalByEmployeeIdQuery} = leadsApi;

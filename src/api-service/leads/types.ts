@@ -1,9 +1,13 @@
+import { Employee } from "../employees/types";
+
+
 export interface EmployeeData {
   appraisalId: number;
+  employee:Employee;
+  
  
  
-  name: string;
-  department: string;
+  appraisalStatus:"FEEDBACK_INITIATED" | "FEEDBACK_SUBMITTED"|string;
   cycleName: string;
   startDate: Date;
   endDate: Date;

@@ -31,8 +31,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { Link } from "lucide-react";
-import IdpModal from "./IDPForm";
+
 const AppraisalPage = () => {
   const params = useParams();
   const id = params.appraisald as string;
@@ -157,7 +156,7 @@ const AppraisalPage = () => {
   }
   return (
     <div className="container mx-auto px-6 py-8">
-      <h1 className="text-4xl font-bold text-gray-900 mb-8">
+      <h1 className="text-4xl font-bold text-white mb-8">
         Appraisal for {employee?.name}
       </h1>
 

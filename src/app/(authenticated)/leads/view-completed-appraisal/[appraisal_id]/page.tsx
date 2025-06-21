@@ -9,7 +9,7 @@ import { EmployeeDetailsView } from "@/components/leads/EmployeeDetailsView";
 import PerformanceFactorsView from "@/components/leads/PerformanceFactorsView";
 import { SelfAppraisalView } from "@/components/leads/SelfAppraisalView";
 import { useMemo } from "react";
-import IndividualDevelopmentPlanForm from "@/components/leads/IndividualDevelopmentPlanForm";
+import IndividualDevelopmentPlanCard from "@/components/leads/IndividualDevelopmentPlanCard";
 
 export default function AppraisalDetailPage() {
   const params = useParams();
@@ -60,7 +60,7 @@ export default function AppraisalDetailPage() {
       <EmployeeDetailsView employee={employeeData} />
       <SelfAppraisalView selfAppraisal={completed_appraisal?.self_appraisal} />
       <PerformanceFactorsView performance_factors={completed_appraisal?.performance_factors} />
-      <IndividualDevelopmentPlanCard idp={completed_appraisal?.idp} />
+      <IndividualDevelopmentPlanCard idpData={completed_appraisal?.idp} />
     </div>
   );
 }

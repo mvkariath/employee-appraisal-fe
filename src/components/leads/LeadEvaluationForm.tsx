@@ -41,13 +41,13 @@ export const LeadEvaluationForm = ({
   return (
     <>
       <Card >
-        <CardHeader>
-          <CardTitle>Lead Evaluation</CardTitle>
+        <CardHeader> 
+          <CardTitle className="font-medium">PERFORMANCE FACTORS</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
+          <Table className="border-blue-200">
+            <TableHeader className="bg-gradient-to-r from-blue-400 to-blue-200 text-white h-15" >
+              <TableRow >
                 <TableHead className="w-1/4">Competency</TableHead>
                 <TableHead className="w-1/4">Strengths</TableHead>
                 <TableHead className="w-1/4">Improvement Needed</TableHead>
@@ -85,7 +85,7 @@ export const LeadEvaluationForm = ({
         value={item.rating ?? 0}
         min={0}
         max={10}
-        className="w-20"
+        className="w-40"
         onChange={(e) =>
           onChange(index, "rating", parseInt(e.target.value, 10) || 0)
         }

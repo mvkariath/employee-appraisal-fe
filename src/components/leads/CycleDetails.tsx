@@ -1,8 +1,9 @@
-import { Badge } from "lucide-react";
+
 import { format } from "path";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 import { de } from "date-fns/locale";
 import { formatDate } from "../../components/functions"
+import { Badge } from "../ui/badge";
 
 interface CycleDetailsProps {
   cycle_name: string;
@@ -11,12 +12,24 @@ interface CycleDetailsProps {
   current_status: "ACTIVE" | "COMPLETED" | "UPCOMING";
 }
 const CycleDetails=({cycle}:CycleDetailsProps)=>{
+  function getStatusColor(status){
+    if(status==="INITIATED"){
+      return "bg-grey-500 text-white-100"
+    }
+    if(status==="IN_PROGRESS"){
+      return "bg-green-500 text-white-100"
+    
+    }
+    if(status==="COMPLETED"){
+      return "bg-purple-500 text-white-100"
+    }
+  }
      return (
     <Card className="max-w-md shadow-xl rounded-2xl">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-xl">{cycle.cycle_name}</CardTitle>
-        {/* <Badge className={`${cycle.statusColor[cycle.current_status]} text-white`}>{cycle.current_status}</Badge> */}
-         <Badge >{cycle.current_status}</Badge>
+        <Badge className={`${getStatusColor(cycle.current_status)}}`}>{cycle.current_status}</Badge>
+         {/* <Badge >{cycle.current_status}</Badge> */}
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-muted-foreground">
         <div>

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { EmployeeData } from "@/api-service/leads/types"
 import { FileText, User, Video } from "lucide-react"
+import { formatDate } from "../functions"
 
 export interface EmployeeAppraisalCardProps {
   appraisal:EmployeeData
@@ -108,8 +109,7 @@ export const EmployeeAppraisalCard = ({ appraisal }: EmployeeAppraisalCardProps)
   };
 
 return(
-   <Card
-                key={appraisal.employee.id}
+   <Card key={appraisal.employee.id}
                 className="hover:shadow-lg transition-shadow"
               >
                 <CardContent className="p-6">
@@ -130,17 +130,33 @@ return(
                         </p>
                       </div>
                     </div>
-                    <Badge className={getStatusColor(appraisal.employee.status)}>
-                      {appraisal.employee.status}
+                    <Badge className={getStatusColor(appraisal.appraisalStatus)}>
+                      {appraisal.appraisalStatus}
                     </Badge>
                   </div>
   
                   <div className="space-y-3">
                     <div className="flex justify-between text-sm">
+                      
+                      
+                      {/* <span className="text-black-500">
+                        Email:    {appraisal.employee.email}
+                      </span> */}
                       <span className="text-gray-600">
                         Current Status: {appraisal.employee.status}
                       </span>
-                      {getProgressFromStatus(appraisal.employee.status)}%
+                      
+                    </div>
+                      <div className="flex justify-between text-sm">
+                      
+                      
+                      <span className="text-gray-500">
+                       Start Date: {formatDate(appraisal.startDate)}
+                      </span>
+                      <span className="text-black-600-bold">
+                       Due Date :{formatDate(appraisal.endDate)}
+                      </span>
+                      
                     </div>
                     {/* <Progress
                       value={getProgressFromStatus(appraisal.employee.status)}
@@ -180,3 +196,4 @@ return(
               </Card>
 )
 }
+
