@@ -21,6 +21,7 @@ import {
   IndividualDevelopmentPlan,
   PerformanceFactor,
 } from "@/api-service/leads/types";
+import { toast } from "sonner";
 import { Dialog, DialogTitle } from "@radix-ui/react-dialog";
 import { DialogContent, DialogHeader } from "@/components/ui/dialog";
 import {
@@ -31,6 +32,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
+import PerformanceFactorsView from "@/components/leads/PerformanceFactorsView";
 
 const AppraisalPage = () => {
   const params = useParams();
@@ -82,14 +84,16 @@ const AppraisalPage = () => {
 
   const [createPerformanceFactor, { isLoading: isUpdating }] =
     useUpdatePerformanceFactorMutation();
-  const handleSubmitPerformanceFactor = async (action: string, form_data) => {
+  const handleSubmit = async (action: string, form_data) => {
     console.log("Submit clicked");
     console.log("Evaluations:", form_data);
     console.log(id);
-    const payload = {
-      performance_factors: form_data,
-      save_type: action,
-    };
+    const payload={
+      ...form_data,
+      save_type:action
+    }
+    
+    
     await createPerformanceFactor({
       id: Number(id),
       ...payload,
@@ -97,11 +101,19 @@ const AppraisalPage = () => {
       .unwrap()
       .then(() => {
         console.log("Sucesss");
+           toast("Success",{
+        
+        description:action==="draft"?"Saved Successfully":"Submitted Successfully"
+      })
       })
       .catch((e) => {
         console.error("Error updating performance factors:", e);
-        alert("Failed to update performance factors. Please try again.");
+       toast("Failed",{
+     
+        description:`Failed to ${action} `
+       })
       });
+   
   };
 
   const handleChange = (
@@ -165,17 +177,21 @@ const AppraisalPage = () => {
         {visible_fields.includes("self_appraisal") && (
           <SelfAppraisalView selfAppraisal={selfAppraisal} />
         )}
-        {visible_fields.includes("performance_factors") && (
+        {!visible_fields.includes("idp") && visible_fields.includes("performance_factors") && (
           <LeadEvaluationForm
             evaluations={evaluations}
             onChange={handleChange}
           />
         )}
         {visible_fields.includes("idp") && (
+          <>
+        
+          <PerformanceFactorsView performance_factors={evaluations}/>
           <IndividualDevelopmentPlanForm
             idpData={idpData}
             handleChange={handleIDPChange}
           />
+            </>
         )}
 
         {/* Button Section */}
@@ -196,8 +212,9 @@ const AppraisalPage = () => {
                   <DialogHeader>
                     <DialogTitle>Past Appraisals</DialogTitle>
                   </DialogHeader>
-                  {pastAppraisals ? (
-                    <Table>
+                  {pastAppraisals? (
+                    pastAppraisals.length>0 ?
+                   ( <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Cycle Name</TableHead>
@@ -229,10 +246,16 @@ const AppraisalPage = () => {
                           </TableRow>
                         ))}
                       </TableBody>
-                    </Table>
-                  ) : (
+                    </Table>):
+                    (
                     <div className="text-gray-500">
                       No past appraisals found.
+                    </div>
+                  )
+
+                  ) : (
+                    <div className="text-gray-500">
+                      Loading
                     </div>
                   )}
                 </DialogContent>
@@ -243,8 +266,8 @@ const AppraisalPage = () => {
                   variant="outline"
                   onClick={() => {
                     visible_fields.includes("idp")
-                      ? handleSubmitPerformanceFactor("draft", idpData)
-                      : handleSubmitPerformanceFactor("draft", evaluations);
+                      ? handleSubmit("draft",{idp:idpData})
+                      : handleSubmit("draft", {performance_factors:evaluations});
                   }}
                 >
                   Save as Draft
@@ -252,8 +275,8 @@ const AppraisalPage = () => {
                 <Button
                   onClick={() => {
                     visible_fields.includes("idp")
-                      ? handleSubmitPerformanceFactor("submit", idpData)
-                      : handleSubmitPerformanceFactor("submit", evaluations);
+                      ? handleSubmit("submit", {idp:idpData})
+                      : handleSubmit("submit", {performance_factors:evaluations});
                   }}
                 >
                   Submit Evaluation

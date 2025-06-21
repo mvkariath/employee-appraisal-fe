@@ -41,23 +41,28 @@ const statusColor = {
   };
 export const EmployeeAppraisalsTable = ({ appraisals}  :{ appraisals:EmployeeData[]|undefined}) => {
   const router=useRouter();
-   const handleViewAppraisal = (appraisalId:number) => {
-    router.push(`/leads/appraisal/${appraisalId}`)
+   const handleViewAppraisal = (appraisalId:number,status:string) => {
+    if(status==="FEEDBACK_INITIATED" || status==="FEEDBACK_SUBMITTED"){
+         router.push(`/leads/appraisal/${appraisalId}`)
+    }else if(status==="MEETING_DONE"){
+      router.push(`/leads/view-completed-appraisal/${appraisalId}`)
+    }
+ 
   }
 
   return (
    <Table >
-          <TableHeader >
-            <TableRow >
-              <TableHead>Name</TableHead>
-               <TableHead>Team</TableHead>
-                <TableHead>Name</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Start date</TableHead>
-             <TableHead>Due Date</TableHead>
-            </TableRow>
-          </TableHeader>
+<TableHeader>
+  <TableRow>
+    <TableHead className="text-white">Name</TableHead>
+    <TableHead className="text-white">Team</TableHead>
+    <TableHead className="text-white">Name</TableHead>
+    <TableHead className="text-white">Role</TableHead>
+    <TableHead className="text-white">Status</TableHead>
+    <TableHead className="text-white">Start date</TableHead>
+    <TableHead className="text-white">Due Date</TableHead>
+  </TableRow>
+</TableHeader>
           <TableBody>
             {appraisals?.map((appraisal:EmployeeData) => (
               <TableRow key={appraisal.appraisalId}>
@@ -79,7 +84,7 @@ export const EmployeeAppraisalsTable = ({ appraisals}  :{ appraisals:EmployeeDat
                </TableCell>
                <TableCell>  {formatDate(appraisal.endDate)}</TableCell>
                 <TableCell>
-                  <Button size="sm" className="bg-white text-black" onClick={() => handleViewAppraisal(appraisal.appraisalId)}>
+                  <Button size="sm" className="bg-white text-black" onClick={() => handleViewAppraisal(appraisal.appraisalId,appraisal.appraisalStatus)}>
                     View
                   </Button>
                 </TableCell>

@@ -15,53 +15,10 @@ export interface EmployeeAppraisalCardProps {
 export const EmployeeAppraisalCard = ({ appraisal }: EmployeeAppraisalCardProps) => {
   const router = useRouter()
 
-  const handleViewAppraisal = () => {
-    router.push(`/leads/appraisal/${appraisal.appraisalId}`)
-  }
 
-  function moment(endDate: Date) {
-    throw new Error("Function not implemented.")
-  }
 
-//   return (
- 
-//     <Card   key={appraisal.appraisalId}
-//               className="hover:shadow-lg transition-shadow">
-    
-//     <CardContent className="p-6">
-//  <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold"> {appraisal.name
-//                         .split(" ")
-//                         .map((n) => n[0])
-//                         .join("")}</div>
-//                         <h3 className="font-semibold text-gray-900">
-//                         {appraisal.name}
-//                       </h3>
-//     </CardContent>
-       
-//         {/* <Badge variant={
-//           appraisal?.status === "completed"
-//             ? "default"
-//             : appraisal?.status === "in_progress"
-//               ? "secondary"
-//               : "outline"
-//         }>
-//   {appraisal?.status ? appraisal.status.replace("_", " ") : "N/A"}
-//         </Badge> */}
-     
 
-//         {/* <div className="mb-3">
-//           <div className="flex justify-between text-sm text-gray-600 mb-1">
-//             <span>Progress</span>
-//             <span>{appraisal.progress}%</span>
-//           </div>
-//           <Progress value={appraisal.progress} />
-//         </div> */}
 
-//       <CardFooter>
-//         <Button onClick={handleViewAppraisal} className="w-full">View Appraisal</Button>
-//       </CardFooter>
-//     </Card>
-//   )
   const getProgressFromStatus = (status: string): number => {
     switch (status) {
       case "NA":
@@ -107,6 +64,14 @@ export const EmployeeAppraisalCard = ({ appraisal }: EmployeeAppraisalCardProps)
         return "bg-gray-100 text-gray-800";
     }
   };
+     const handleViewAppraisal = (appraisalId:number,status:string) => {
+    if(status==="FEEDBACK_INITIATED" || status==="FEEDBACK_SUBMITTED"){
+         router.push(`/leads/appraisal/${appraisalId}`)
+    }else if(status==="MEETING_DONE"){
+      router.push(`/leads/view-completed-appraisal/${appraisalId}`)
+    }
+ 
+  }
 
 return(
    <Card key={appraisal.employee.id}
@@ -166,10 +131,7 @@ return(
                     <div className="flex gap-2 flex-wrap" key={appraisal.appraisalId}>
                       <Button
                         size="sm"
-                        onClick={() => {
-                       
-                          router.push(`/leads/appraisal/${appraisal.appraisalId}`);
-                        }}
+                        onClick={()=>{handleViewAppraisal(appraisal.appraisalId,appraisal.appraisalStatus)}}
                       >
                         <FileText className="h-4 w-4 mr-1" />
                         View
@@ -179,7 +141,7 @@ return(
                         Contact
                       </Button>
                       
-                      {appraisal.employee.status === "FEEDBACK_SUBMITTED" && (
+                      {appraisal.appraisalStatus === "FEEDBACK_SUBMITTED" && (
                         <Button
                           size="sm"
                           variant="default"

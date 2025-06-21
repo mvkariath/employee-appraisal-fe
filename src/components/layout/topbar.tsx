@@ -20,7 +20,7 @@ export function Topbar() {
           </div>
         </form>
       </div>
-      {/* <ModeToggle /> */}
+      <ModeToggle />
       <div className="flex items-center gap-4">
         <UserNav />
       </div>

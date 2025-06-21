@@ -30,13 +30,14 @@ const TeamLeadDashboard = () => {
 
   const [userId, setUserId] = useState<number| null>(null);
 
-  
+  const [leadName,setLeadName]=useState("")
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       try {
         const parsed = JSON.parse(token);
-        setUserId(parsed.id); // assuming token is a JSON string with `id`
+        setUserId(parsed.id); 
+        setLeadName(parsed.name)// assuming token is a JSON string with `id`
       } catch (e) {
         console.error("Invalid token in localStorage:", e);
       }
@@ -70,11 +71,11 @@ console.log("Pending Appraisals:", pendingAppraisals);
     <div className="bg-gray-50/50 min-h-screen p-8">
       <div className="max-w-7xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold">
             Team Lead Dashboard
           </h1>
-          <p className="text-gray-600">
-            Welcome back, {teamName}! Here's an overview of your team's
+          <p className="text-gray-100">
+            Welcome back, {leadName}! Here's an overview of your team's
             appraisals.
           </p>
         </header>
@@ -124,12 +125,12 @@ console.log("Pending Appraisals:", pendingAppraisals);
             <div className="mb-8">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Pending Appraisals</h2>
-                <Button variant="link" className="text-sm" onClick={()=>router.push('/leads/view-appraisal?status=FEEDBACK_INITIATED')}>
+                <Button variant="link" className="text-sm-white" onClick={()=>router.push('/leads/view-appraisal?status=FEEDBACK_INITIATED')}>
                   View All
                 </Button>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                {pendingAppraisals?.map((appraisal) => (
+              <div className="grid grid-cols-2 gap-6">
+                {pendingAppraisals?.slice(0,3).map((appraisal) => (
                   <EmployeeAppraisalCard
                     key={appraisal.appraisalId}
                     appraisal={appraisal}
@@ -142,12 +143,12 @@ console.log("Pending Appraisals:", pendingAppraisals);
             <div className="mb-8">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Completed Appraisals</h2>
-                <Button variant="link" className="text-sm" onClick={()=>{router.push('/leads/view-appraisal?status=FEEDBACK_SUBMITTED')}}>
+                <Button variant="link" className="text-sm-white" onClick={()=>{router.push('/leads/view-appraisal?status=FEEDBACK_SUBMITTED')}}>
                   View All
                 </Button>
               </div>
-              <div className="space-y-4">
-                {completedAppraisals.map((appraisal) => (
+              <div className="grid grid-cols-2 gap-6">
+                {completedAppraisals.slice(0,3).map((appraisal) => (
                  <EmployeeAppraisalCard key={appraisal.appraisalId}
                  appraisal={appraisal} />
                 ))}

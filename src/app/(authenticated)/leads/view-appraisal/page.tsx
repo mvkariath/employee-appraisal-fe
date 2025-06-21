@@ -70,7 +70,8 @@ export default function AppraisalsPage() {
               variant={view=== "card" ? "default" : "outline"}
               size="sm"
               onClick={() => setView("card")}
-            >
+              
+            > 
               <Grid className="h-4 w-4 mr-2 " />
               Card View
             </Button>
