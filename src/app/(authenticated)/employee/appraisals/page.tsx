@@ -14,7 +14,6 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import EmployeeSelfAppraisalModal from "../components/EmployeeSelfAppraisalModal";
-import { GeminiAppraisalSummaryChat } from "../components/SummaryGenerator";
 import { useGetPastAppraisalsQuery } from "@/api-service/appraisal/appraisal.api";
 import { useGetEmployeeByIdQuery } from "@/api-service/employees/employee.api";
 import { useGetAppraisalByEmployeeIdQuery } from "@/api-service/appraisal/appraisal.api";
@@ -23,6 +22,7 @@ import { useUpdateAppraisalMutation } from "@/api-service/appraisal/appraisal.ap
 import { useFillformMutation } from "@/api-service/employees/employee.api";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useGetEmployeesQuery } from "@/api-service/employees/employee.api";
+import { map } from "zod";
 // Mock data - same as your original
 function HRName({ id }: { id: number }) {
   const { data, isLoading } = useGetEmployeeByIdQuery({ id });
@@ -51,13 +51,12 @@ const defaultFormData = {
 };
 
 function mapBackendAppraisalToFormData(appraisal: any) {
-  // If you store leadId in self_appraisal[0]
-  const sa = appraisal.self_appraisal?.[0] || {};
-  const leadId = sa.leadId || [];
+  if (!appraisal) return defaultFormData;
 
   return {
-    leadId: Array.isArray(leadId) ? leadId : [leadId],
-    selfAssessments: appraisal.self_appraisal
+    leadId: appraisal.appraisalLeads?.map((lead: any) => lead.id) || [],
+
+    selfAssessments: appraisal.self_appraisal?.length
       ? appraisal.self_appraisal.map((sa: any) => ({
           deliveryDetails: sa.delivery_details || "",
           accomplishments: sa.accomplishments || "",
@@ -66,6 +65,7 @@ function mapBackendAppraisalToFormData(appraisal: any) {
           timeFrame: sa.project_time_frame || "",
         }))
       : [{ ...defaultFormData.selfAssessments[0] }],
+
     performanceFactors: (appraisal.performance_factors || []).map(
       (pf: any) => ({
         competency: pf.competency || "",
@@ -74,6 +74,7 @@ function mapBackendAppraisalToFormData(appraisal: any) {
         rating: pf.rating?.toString() || "",
       })
     ),
+
     individualDevelopmentPlan: {
       technical:
         appraisal.idp?.find((i: any) => i.competency === "TECHNICAL")
@@ -85,10 +86,16 @@ function mapBackendAppraisalToFormData(appraisal: any) {
         appraisal.idp?.find((i: any) => i.competency === "FUNCTIONAL")
           ?.technical_objective || "",
     },
+
     additionalRemarks: appraisal.additionalRemarks || "",
   };
 }
+
+
 function mapEmployeeToModalData(employeeOrAppraisal: any): any {
+  if (!employeeOrAppraisal) {
+     return { name: '', designation: '', employeeNumber: '', team: '' };
+  }
   // If it's an appraisal object with an employee field
   if (employeeOrAppraisal && employeeOrAppraisal.employee) {
     return {
@@ -149,7 +156,6 @@ function getProgressForStatus(status: string): number {
 function mapBackendStatusToUI(
   status: string
 ): "pending" | "completed" | "overdue" {
-  // console.log("Mapping status:", status);
   if (status === "ALL_DONE") return "completed";
   if (
     status === "INITIATED" ||
@@ -160,14 +166,8 @@ function mapBackendStatusToUI(
     status === "DONE"
   )
     return "pending";
-  // Add more mappings as needed
   return "pending";
 }
-
-// const leadOptions = [
-//   { id: 1, name: "Mike Chen" },
-//   { id: 2, name: "Lisa Park" },
-// ];
 
 type AppraisalStatus =
   | "NA"
@@ -190,20 +190,14 @@ const statusColors = {
 };
 
 export default function AppraisalsPage() {
-  // FIXED: Use a single appraisals state array instead of separate current/past
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingAppraisal, setViewingAppraisal] = useState<any>(null);
-  const [draftData, setDraftData] = useState<any>(null);
   const { data: employees = [], isLoading: employeesLoading } =
     useGetEmployeesQuery();
   const leadOptions = employees
     .filter((emp) => emp.role === "LEAD")
     .map((emp) => ({ id: emp.id, name: emp.name }));
-  console.log("Lead Options:", leadOptions);
-  // const [selectedAppraisalId, setSelectedAppraisalId] = useState<number | null>(
-  //   null
-  // );
 
   let employeeId: number | null = null;
   if (typeof window !== "undefined") {
@@ -217,60 +211,38 @@ export default function AppraisalsPage() {
       }
     }
   }
+  const { data: employeeData } = useGetEmployeeByIdQuery(
+    employeeId !== null ? { id: employeeId } : skipToken
+  );
+  
+  // --- FIX 1: Combined the two identical hook calls into one ---
   const {
     data: allAppraisals = [],
     isLoading: isCurrentLoading,
     error: currentError,
-  } = useGetAppraisalByEmployeeIdQuery(employeeId ? employeeId : skipToken);
+    refetch: refetchAppraisals, // Get the refetch function here
+  } = useGetAppraisalByEmployeeIdQuery(
+    employeeId ? employeeId : skipToken, 
+    { refetchOnMountOrArgChange: true } // Ensure fresh data on component load
+  );
 
   const currentAppraisal =
     allAppraisals.find((a: any) => a.current_status !== "ALL_DONE") || null;
-  console.log("Current Appraisal:", currentAppraisal);
-  // FIXED: Derive current and past appraisals from the main state
-  // const currentAppraisal =
-  //   appraisals.find((a) => a.status === "pending") || null;
-  // const pastAppraisals = appraisals.filter((a) => a.status === "completed");
+
   const {
     data: pastAppraisals = [],
     isLoading,
     error,
   } = useGetPastAppraisalsQuery(employeeId ? employeeId : skipToken);
-  console.log("Past Appraisals:", pastAppraisals);
-  //   const { data: fullAppraisal, isLoading: isFullLoading } = useGetAppraisalByIdQuery(
-  //   selectedAppraisalId ?? skipToken
-  // );
-  // console.log("Full appraisal fetched:", fullAppraisal, "for id", selectedAppraisalId);
-  //   const hrIds = Array.from(
-  //   new Set(
-  //     pastAppraisals
-  //       .map(a => a.cycle?.created_by?.id)
-  //       .filter((id): id is number => typeof id === "number")
-  //   )
-  // );
-  // console.log("HR IDs:", hrIds);
-  // const hrDetails = hrIds.map((id) => {
-  //   const { data } = useGetEmployeeByIdQuery({ id: id as number });
-  //   console.log("HR Data for ID:", id, data);
-  //   return { id, name: data?.name || "Loading..." };
-  // });
 
-  // const hrIdToName = Object.fromEntries(hrDetails.map((hr) => [hr.id, hr.name]));
-
-  // FIXED: Update the appraisals array instead of just currentAppraisal
   const [updateAppraisal] = useUpdateAppraisalMutation();
-  const [fillForm] = useFillformMutation();
-  // console.log(viewingAppraisal);
-  const {
-  data: newAppraisals = [],
-  isLoading: isCurrentlyLoading,
-  error: newError,
-  refetch: refetchAppraisals, // <--- add this
-} = useGetAppraisalByEmployeeIdQuery(employeeId ? employeeId : skipToken);
+
   const handleSubmitSelfAppraisal = async (
     formData: any,
     action: "draft" | "submit"
   ) => {
     if (!currentAppraisal) return;
+    console.log("Submitting self-appraisal with data:", formData);
     const update_payload = {
       appraisalId: currentAppraisal.id,
       data: {
@@ -283,33 +255,40 @@ export default function AppraisalsPage() {
           project_time_frame: a.timeFrame,
           leadId: formData.leadId,
         })),
-        save_type: "submit",
-        // appraisalStatus: action === "draft" ? "SELF_APPRAISED" : "INITIATE_FEEDBACK",
-      
+        save_type: action,
       },
-      
     };
 
-    await updateAppraisal(update_payload);
-    await refetchAppraisals();
-    setIsModalOpen(false);
+    try {
+      // Using .unwrap() will cause the promise to resolve on success or throw an error
+      await updateAppraisal(update_payload).unwrap();
+      // Refetch the data to get the latest status from the server
+      await refetchAppraisals();
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error("Failed to submit self-appraisal:", err);
+      // Optionally show an error toast to the user here
+    }
   };
 
-  // const [viewingAppraisal, setViewingAppraisal] = useState<any>(null);
   const handleViewAppraisal = (appraisal: any) => {
-    console.log("Selected appraisal for view:", appraisal);
     setViewingAppraisal(appraisal);
     setIsViewModalOpen(true);
   };
-  // console.log("Current Appraisal:", currentAppraisal);
+  
+  // --- FIX 2: Create a clear, robust boolean for the button logic ---
+  const selfAppraisalCompleted = currentAppraisal 
+    ? statusFlow.indexOf(currentAppraisal.current_status) >= statusFlow.indexOf("SELF_APPRAISED")
+    : false;
+    console.log("currentAppraisal:", currentAppraisal);
+  console.log("mappingAppraisal:",mapBackendAppraisalToFormData(currentAppraisal));
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">My Appraisals</h1>
 
-      {/* Current Appraisal Section */}
       <div className="mb-10">
         <h2 className="text-xl font-semibold mb-4">Current Appraisal</h2>
-        {currentAppraisal ? (
+        {isCurrentLoading ? <p>Loading current appraisal...</p> : currentAppraisal ? (
           <Card>
             <CardHeader className="border-b">
               <div className="flex justify-between items-center">
@@ -328,7 +307,7 @@ export default function AppraisalsPage() {
                       ]
                     }
                     <span className="capitalize">
-                      {currentAppraisal.current_status}
+                      {currentAppraisal.current_status.replace("_", " ")}
                     </span>
                   </div>
                 </Badge>
@@ -369,11 +348,9 @@ export default function AppraisalsPage() {
                 </p>
               </div>
 
-              {currentAppraisal && (
-                <div className="flex gap-3 mt-3">
-                  {currentAppraisal.self_appraisal &&
-                  currentAppraisal.self_appraisal.length > 0 &&
-                  currentAppraisal.current_status === "SELF_APPRAISED" ? (
+              <CardFooter className="px-0 pt-4">
+                {/* --- FIX 3: Use the new boolean for clean and correct rendering --- */}
+                {selfAppraisalCompleted ? (
                     <Button
                       variant="outline"
                       onClick={() => handleViewAppraisal(currentAppraisal)}
@@ -384,9 +361,8 @@ export default function AppraisalsPage() {
                     <Button onClick={() => setIsModalOpen(true)}>
                       Fill Self Appraisal
                     </Button>
-                  )}
-                </div>
-              )}
+                )}
+              </CardFooter>
             </CardContent>
           </Card>
         ) : (
@@ -401,7 +377,7 @@ export default function AppraisalsPage() {
       {/* Past Appraisals Section */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Past Appraisals</h2>
-        {pastAppraisals.length > 0 ? (
+        {isLoading ? <p>Loading past appraisals...</p> : pastAppraisals.length > 0 ? (
           <div className="space-y-4">
             {pastAppraisals.map((appraisal: any) => (
               <Card key={appraisal.id}>
@@ -410,30 +386,19 @@ export default function AppraisalsPage() {
                     <CardTitle>{appraisal.cycle_name}</CardTitle>
                     <div className="flex items-center gap-3">
                       <Badge
-                        className={
-                          statusColors[
-                            mapBackendStatusToUI(appraisal.current_status)
-                          ]
-                        }
+                        className={statusColors.completed} // Past appraisals are always completed
                       >
                         <div className="flex items-center gap-1">
-                          {
-                            statusIcons[
-                              mapBackendStatusToUI(appraisal.current_status)
-                            ]
-                          }
+                          {statusIcons.completed}
                           <span className="capitalize">
-                            {appraisal.current_status}
+                            Completed
                           </span>
                         </div>
                       </Badge>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          // console.log("Viewing appraisal:", appraisal);
-                          handleViewAppraisal(appraisal);
-                        }}
+                        onClick={() => handleViewAppraisal(appraisal)}
                       >
                         View Details
                       </Button>
@@ -444,16 +409,11 @@ export default function AppraisalsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
                       <p className="text-sm text-gray-500">HR</p>
-                      {/* <p className="font-medium"> {hrIdToName[appraisal.cycle?.created_by] || "Loading..."}</p>
-                       */}
-                      {appraisal?.created_by ? (
+                       {appraisal?.created_by?.id ? (
                         <HRName id={appraisal.created_by.id} />
                       ) : (
                         "N/A"
                       )}
-                      {/* <p className="font-medium">
-                        {appraisal?.created_by || "N/A"}</p>
-                    // </div> */}
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Completed On</p>
@@ -474,22 +434,10 @@ export default function AppraisalsPage() {
                       <p className="text-sm text-gray-500">Rating</p>
                       <p className="font-medium flex items-center gap-1">
                         <span className="text-yellow-500">★</span>
-                        {getAverageRating(appraisal.performance_factors)}
+                        {getAverageRating(appraisal.performance_factors) || 'N/A'}
                       </p>
                     </div>
                   </div>
-
-                  {/* {appraisal.additionalRemarks && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-500 mb-2">
-                        Additional Remarks
-                      </p>
-                      <p className="text-gray-700">{appraisal.additionalRemarks}</p>
-                    </div>
-                  )} */}
-                  {/* {appraisal.selfAppraisal && (
-                    <GeminiAppraisalSummaryChat appraisalData={appraisal} />
-                  )} */}
                 </CardContent>
               </Card>
             ))}
@@ -504,7 +452,7 @@ export default function AppraisalsPage() {
       </div>
 
       {/* Self Appraisal Modal */}
-      {currentAppraisal && currentAppraisal.current_status !== "ALL DONE" && (
+      {currentAppraisal && (
         <EmployeeSelfAppraisalModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
@@ -512,13 +460,8 @@ export default function AppraisalsPage() {
           employeeData={mapEmployeeToModalData(currentAppraisal.employee)}
           leadOptions={leadOptions}
           initialData={mapBackendAppraisalToFormData(currentAppraisal)}
-          isReadOnly={
-            !!(
-              currentAppraisal.self_appraisal &&
-              currentAppraisal.self_appraisal.length > 0 &&
-              currentAppraisal.current_status === "SELF_APPRAISED"
-            )
-          }
+          isReadOnly={selfAppraisalCompleted} // Use the same boolean here
+          currentStatus={currentAppraisal.current_status}
         />
       )}
 
@@ -532,10 +475,11 @@ export default function AppraisalsPage() {
             setViewingAppraisal(null);
           }}
           onSubmit={() => {}}
-          employeeData={mapEmployeeToModalData(viewingAppraisal)}
+          employeeData={mapEmployeeToModalData(employeeData)}
           leadOptions={leadOptions}
           isReadOnly={true}
           initialData={mapBackendAppraisalToFormData(viewingAppraisal)}
+          currentStatus={viewingAppraisal.current_status || viewingAppraisal.appraisal_status} // Handle both past and current
         />
       )}
     </div>
