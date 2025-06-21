@@ -1,6 +1,6 @@
-import { Table } from "lucide-react"
+
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card"
-import { TableHeader, TableRow, TableHead, TableBody, TableCell } from "../ui/table"
+import { Table,TableHeader, TableRow, TableHead, TableBody, TableCell } from "../ui/table"
 import { PerformanceFactor } from "@/api-service/leads/types"
 
 const PerformanceFactorsView = ({performance_factors}:{performance_factors:PerformanceFactor[]}) => {
@@ -20,7 +20,7 @@ const PerformanceFactorsView = ({performance_factors}:{performance_factors:Perfo
               </TableRow>
             </TableHeader>
             <TableBody>
-              {performance_factors.map((factor) => (
+              {performance_factors?.map((factor) => (
                 <TableRow key={factor.id}>
                   <TableCell>{factor.competency}</TableCell>
                   <TableCell>{factor.strengths ?? "—"}</TableCell>

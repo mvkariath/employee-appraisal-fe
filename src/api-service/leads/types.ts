@@ -33,7 +33,7 @@ export interface AppraisalLeadView {
   self_appraisal: SelfAppraisalEntry[];
 }
 
-interface IndividualDevelopmentPlan {
+export interface IndividualDevelopmentPlan {
   id: number;
   competency: string;
   technical_objective: string;

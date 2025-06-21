@@ -83,16 +83,7 @@ setPendingAppraisals(data.slice().sort((a, b) => new Date(a.endDate).getTime() -
 },[data])
 
 console.log("Pending Appraisals:", pendingAppraisals);
-  const scheduledMeetings = [
-    {
-      employeeName: "Jane Doe",
-      date: "2024-06-28 at 10:00 AM",
-    },
-    {
-      employeeName: "Peter Jones",
-      date: "2024-07-02 at 2:00 PM",
-    },
-  ];
+ 
  if (!userId) return <div>Loading user...</div>;
   if (isLoading) return <div>Loading leads...</div>;
   if (error) return <div>Error fetching leads</div>;
@@ -119,7 +110,7 @@ console.log("Pending Appraisals:", pendingAppraisals);
               <Users className="h-4 w-4 text-white" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalAppraisals}</div>
+              <div className="text-2xl font-bold">{data?.length+pastAppraisals.length}</div>
             </CardContent>
           </Card>
 
@@ -143,7 +134,7 @@ console.log("Pending Appraisals:", pendingAppraisals);
               <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{completedAppraisals}</div>
+              <div className="text-2xl font-bold">{pastAppraisals.length}</div>
             </CardContent>
           </Card>
         </div>
@@ -158,7 +149,7 @@ console.log("Pending Appraisals:", pendingAppraisals);
                   View All
                 </Button>
               </div>
-              <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 {pendingAppraisals?.map((appraisal) => (
                   <EmployeeAppraisalCard
                     key={appraisal.appraisalId}
@@ -168,7 +159,7 @@ console.log("Pending Appraisals:", pendingAppraisals);
               </div>
             </div>
 
-            Completed Appraisals
+          
             <div className="mb-8">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Completed Appraisals</h2>
@@ -178,59 +169,13 @@ console.log("Pending Appraisals:", pendingAppraisals);
               </div>
               <div className="space-y-4">
                 {pastAppraisals.map((appraisal) => (
-                  <Card key={appraisal.appraisalId}>
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold">
-                          {appraisal.name}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Due: {appraisal.endDate}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="w-32 h-2 bg-gray-200 rounded-full">
-                          <div
-                            className="h-2 bg-black rounded-full"
-                            style={{ width: `${appraisal.progress}%` }}
-                          ></div>
-                        </div>
-                        <Button variant="outline" size="sm">
-                          View
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                 <EmployeeAppraisalCard key={appraisal.appraisalId}
+                 appraisal={appraisal} />
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Scheduled Meetings */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Scheduled Meetings</h2>
-            <Card>
-              <CardContent className="p-4 space-y-4">
-                {scheduledMeetings.map((meeting, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-4">
-                      <CalendarIcon className="h-6 w-6 text-gray-400" />
-                      <div>
-                        <p className="font-semibold">{meeting.employeeName}</p>
-                        <p className="text-sm text-gray-500">{meeting.date}</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="icon">
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </div>
     </div>

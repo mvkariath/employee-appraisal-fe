@@ -2,13 +2,14 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Employee } from "@/api-service/employees/types";
+import { formatDate } from "../functions";
 
 
 export const EmployeeDetailsView = ({ employee }: {employee:Employee}) => {
-  return (
-    <Card>
+  return (  
+  <Card className="bg-gradient-to-r from-purple-500 to-purple-200 text-white">
       <CardHeader>
-        <CardTitle>Employee Details</CardTitle>
+        <CardTitle className="font-bold"> Employee Details</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-4">
@@ -22,7 +23,7 @@ export const EmployeeDetailsView = ({ employee }: {employee:Employee}) => {
           </div>
           <div>
             <p className="font-semibold">Date of Joining</p>
-            <p>{employee.dateOfJoining}</p>
+            <p>{formatDate(employee.dateOfJoining)}</p>
           </div>
           <div>
             <p className="font-semibold">Years of Experience</p>

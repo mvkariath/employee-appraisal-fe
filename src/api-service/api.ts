@@ -4,7 +4,7 @@ const baseApi = createApi({
   reducerPath: "baseApi",
   tagTypes: ["EMPLOYEES", "CYCLES", "LEADS", "APPRAISALS"],
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:4000",
+    baseUrl: "http://localhost:3000",
     prepareHeaders: (headers) => {
       const stored = localStorage.getItem("token");
 

@@ -26,7 +26,7 @@ export const SelfAppraisalView = ({ selfAppraisal }: SelfAppraisalViewProps) => 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {selfAppraisal.map((entry) => (
+            {selfAppraisal?.map((entry) => (
               <TableRow key={entry.id}>
                 <TableCell>{entry.delivery_details}</TableCell>
                 <TableCell>{entry.accomplishments}</TableCell>

@@ -1,7 +1,7 @@
 "use client";
 
 import { EmployeeDetailsView } from "@/components/leads/EmployeeDetailsView";
-import IndividualDevelopmentPlan from "@/components/leads/IndividualDevelopmentPlan";
+import IndividualDevelopmentPlanForm from "@/components/leads/IndividualDevelopmentPlanForm";
 import { LeadEvaluationForm } from "@/components/leads/LeadEvaluationForm";
 import { SelfAppraisalView } from "@/components/leads/SelfAppraisalView";
 
@@ -11,14 +11,28 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { use, useEffect, useState } from "react";
 import { produce } from "immer";
-import { useGetAppraisalByIdQuery, useGetPastAppraisalByEmployeeIdQuery } from "@/api-service/leads/leads.api";
+import {
+  useGetAppraisalByIdQuery,
+  useGetPastAppraisalByEmployeeIdQuery,
+} from "@/api-service/leads/leads.api";
 import { useGetEmployeeByIdQuery } from "@/api-service/employees/employee.api";
 import { useUpdatePerformanceFactorMutation } from "@/api-service/leads/leads.api";
-import { PerformanceFactor } from "@/api-service/leads/types";
+import {
+  IndividualDevelopmentPlan,
+  PerformanceFactor,
+} from "@/api-service/leads/types";
 import { Dialog, DialogTitle } from "@radix-ui/react-dialog";
 import { DialogContent, DialogHeader } from "@/components/ui/dialog";
-import { Table,TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import {  Link } from "lucide-react";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+import { Link } from "lucide-react";
+import IdpModal from "./IDPForm";
 const AppraisalPage = () => {
   const params = useParams();
   const id = params.appraisald as string;
@@ -41,37 +55,45 @@ const AppraisalPage = () => {
     "TEAMWORK",
     "MANAGING PROCESSES & WORK",
   ];
-  const performance_factors =data?.performance_factors;
+  const performance_factors = data?.performance_factors;
+  const idpFormData = data?.idp;
   const [isPastAppraisalsOpen, setIsPastAppraisalsOpen] = useState(false);
- const {data:pastAppraisals,isLoading:isLoadingPast} =useGetPastAppraisalByEmployeeIdQuery({ id: data?.employee.id });
-
+  const { data: pastAppraisals, isLoading: isLoadingPast } =
+    useGetPastAppraisalByEmployeeIdQuery({ id: data?.employee.id });
 
   const [evaluations, setEvaluations] = useState([]);
+  const [idpData, setIdpData] = useState([]);
+  // Update evaluations when performance_factors are fetched
+  useEffect(() => {
+    if (performance_factors && performance_factors.length > 0) {
+      // Exclude IDs if needed
 
-// Update evaluations when performance_factors are fetched
-useEffect(() => {
-  if (performance_factors && performance_factors.length > 0) {
-    // Exclude IDs if needed
-    
-    setEvaluations(performance_factors);
-  }
-}, [performance_factors,data]);
+      setEvaluations(performance_factors);
+    }
+  }, [performance_factors, data]);
+  useEffect(() => {
+    if (idpFormData && idpFormData.length > 0) {
+      // Exclude IDs if needed
 
-  //   const handleChange = (index: number, field: string, value: any) => {
-  //     const updated = [...evaluations]
-  //     updated[index][field] = value
-  //     setEvaluations(updated)
-  //   }
-  const router=useRouter();
+      setIdpData(idpFormData);
+    }
+  }, [idpFormData, data]);
+
+  const router = useRouter();
+
   const [createPerformanceFactor, { isLoading: isUpdating }] =
     useUpdatePerformanceFactorMutation();
-  const handleSubmitPerformanceFactor = async () => {
+  const handleSubmitPerformanceFactor = async (action: string, form_data) => {
     console.log("Submit clicked");
-    console.log("Evaluations:", evaluations);
+    console.log("Evaluations:", form_data);
     console.log(id);
+    const payload = {
+      performance_factors: form_data,
+      save_type: action,
+    };
     await createPerformanceFactor({
       id: Number(id),
-      performance_factors: evaluations,
+      ...payload,
     })
       .unwrap()
       .then(() => {
@@ -83,16 +105,34 @@ useEffect(() => {
       });
   };
 
-const handleChange = (index: number, field: keyof PerformanceFactor, value: string | number) => {
-  setEvaluations((prev) => {
-    const updated = [...prev];
-    updated[index] = {
-      ...updated[index],
-      [field]: value,
-    };
-    return updated;
-  });
-};
+  const handleChange = (
+    index: number,
+    field: keyof PerformanceFactor,
+    value: string | number
+  ) => {
+    setEvaluations((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        [field]: value,
+      };
+      return updated;
+    });
+  };
+  const handleIDPChange = (
+    index: number,
+    field: keyof IndividualDevelopmentPlan,
+    value: string | number
+  ) => {
+    setIdpData((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        [field]: value,
+      };
+      return updated;
+    });
+  };
   if (isLoadingAppraisal || isLoadingEmployee) {
     return <div>Loading...</div>;
   }
@@ -132,8 +172,11 @@ const handleChange = (index: number, field: keyof PerformanceFactor, value: stri
             onChange={handleChange}
           />
         )}
-        {visible_fields.includes("individual_development_plans") && (
-          <IndividualDevelopmentPlan />
+        {visible_fields.includes("idp") && (
+          <IndividualDevelopmentPlanForm
+            idpData={idpData}
+            handleChange={handleIDPChange}
+          />
         )}
 
         {/* Button Section */}
@@ -141,53 +184,79 @@ const handleChange = (index: number, field: keyof PerformanceFactor, value: stri
           <CardContent>
             <div className="flex justify-between items-center mt-2">
               <Button
-              variant="outline"
-              onClick={() => setIsPastAppraisalsOpen(true)}
-            >
-              View Past Appraisals
-            </Button>
-             <Dialog open={isPastAppraisalsOpen} onOpenChange={setIsPastAppraisalsOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Past Appraisals</DialogTitle>
-          </DialogHeader>
-          {pastAppraisals ?<Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cycle Name</TableHead>
-                  <TableHead>Start Date</TableHead>
-                  <TableHead>End Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pastAppraisals?.map((appraisal) => (
-                  <TableRow key={appraisal.id}>
-                    <TableCell>{appraisal.cycle_name}</TableCell>
-                    <TableCell>{appraisal.startDate}</TableCell>
-                    <TableCell>{appraisal.endDate}</TableCell>
-                    <TableCell>{appraisal.current_status}</TableCell>
-                    <TableCell>
-                   <Button
-              variant="outline"
-              onClick={() => {
-                router.push(`/leads/view-completed-appraisal/${appraisal.id}`);
-              }}
-            >
-              View Past Appraisals
-            </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table> : <div className="text-gray-500">No past appraisals found.</div>}
-        </DialogContent>
-      </Dialog>
+                variant="outline"
+                onClick={() => setIsPastAppraisalsOpen(true)}
+              >
+                View Past Appraisals
+              </Button>
+              <Dialog
+                open={isPastAppraisalsOpen}
+                onOpenChange={setIsPastAppraisalsOpen}
+              >
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogHeader>
+                    <DialogTitle>Past Appraisals</DialogTitle>
+                  </DialogHeader>
+                  {pastAppraisals ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Cycle Name</TableHead>
+                          <TableHead>Start Date</TableHead>
+                          <TableHead>End Date</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {pastAppraisals?.map((appraisal) => (
+                          <TableRow key={appraisal.id}>
+                            <TableCell>{appraisal.cycle_name}</TableCell>
+                            <TableCell>{appraisal.startDate}</TableCell>
+                            <TableCell>{appraisal.endDate}</TableCell>
+                            <TableCell>{appraisal.current_status}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  router.push(
+                                    `/leads/view-completed-appraisal/${appraisal.id}`
+                                  );
+                                }}
+                              >
+                                View Past Appraisals
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-gray-500">
+                      No past appraisals found.
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
 
               <div className="flex space-x-2">
-                <Button variant="outline">Save as Draft</Button>
-                <Button onClick={handleSubmitPerformanceFactor}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    visible_fields.includes("idp")
+                      ? handleSubmitPerformanceFactor("draft", idpData)
+                      : handleSubmitPerformanceFactor("draft", evaluations);
+                  }}
+                >
+                  Save as Draft
+                </Button>
+                <Button
+                  onClick={() => {
+                    visible_fields.includes("idp")
+                      ? handleSubmitPerformanceFactor("submit", idpData)
+                      : handleSubmitPerformanceFactor("submit", evaluations);
+                  }}
+                >
                   Submit Evaluation
                 </Button>
               </div>
