@@ -18,15 +18,15 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useGetCompletedAppraisalsQuery, useGetLeadsQuery } from "@/api-service/leads/leads.api";
+import {  useGetLeadsQuery } from "@/api-service/leads/leads.api";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { EmployeeData } from "@/api-service/leads/types";
+
 
 const TeamLeadDashboard = () => {
-  // Mock data - replace with actual data from your API
+
   const router=useRouter()
-  const teamName = "Software Engineers";
+
 
   const [userId, setUserId] = useState<number| null>(null);
 
@@ -51,13 +51,16 @@ const TeamLeadDashboard = () => {
 
  
 const pendingAppraisals = useMemo(() => {
-  return data?.filter(item => item.appraisalStatus === 'FEEDBACK_INITIATED') ;
+  return data
+    ?.filter(item => item.appraisalStatus === 'FEEDBACK_INITIATED')
+    .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
 }, [data]);
 
 const completedAppraisals = useMemo(() => {
-  return data?.filter(item => item.appraisalStatus === 'FEEDBACK_SUBMITTED');
+  return data
+    ?.filter(item => item.appraisalStatus === 'FEEDBACK_SUBMITTED')
+    .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
 }, [data]);
-
 
 console.log("Pending Appraisals:", pendingAppraisals);
  

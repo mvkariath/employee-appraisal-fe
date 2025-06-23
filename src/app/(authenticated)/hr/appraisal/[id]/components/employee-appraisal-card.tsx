@@ -5,6 +5,8 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { ArrowRight, FileText, User, Video } from "lucide-react";
+import { useUpdateAppraisalStatusMutation } from "@/api-service/appraisal/appraisal.api";
+
 
 // You can keep these helper functions here or in a shared file
 const getGlassStatusStyles = (status: string) => {
@@ -64,7 +66,14 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
     .split(" ")
     .map((n) => n[0])
     .join("");
-
+    const [updateState]=useUpdateAppraisalStatusMutation()
+ async function initializeAppraisal(employee:Employee){
+   
+  await updateState({id:employee.appraisalId}).then(()=>{
+    console.log("Success")
+  }).catch((e)=>{
+  console.log(e)})
+} 
   return (
     <Card className="bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all duration-300 rounded-xl flex flex-col">
       <CardContent className="p-6 flex-1 flex flex-col">
@@ -109,9 +118,18 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
             >
               <FileText className="h-4 w-4 mr-2" /> View Form
             </Button>
+            {employee.status === "N/A" && (
+              <Button
+                size="sm"
+                onClick={() => initializeAppraisal(employee)}
+                className="bg-green-600 hover:bg-green-700 text-white rounded-lg w-full mt-2"
+              >
+                <ArrowRight className="h-4 w-4 mr-2" /> Initialize
+              </Button>
+            )}
             <Button
               size="sm"
-              variant="outline"
+              variant="default"
               className="border-white/20 text-white/80 hover:bg-white/10 hover:text-white rounded-lg"
             >
               <User className="h-4 w-4 mr-2" /> Contact

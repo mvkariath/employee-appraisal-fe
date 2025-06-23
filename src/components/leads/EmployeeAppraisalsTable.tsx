@@ -84,7 +84,7 @@ export const EmployeeAppraisalsTable = ({ appraisals}  :{ appraisals:EmployeeDat
                </TableCell>
                <TableCell>  {formatDate(appraisal.endDate)}</TableCell>
                 <TableCell>
-                  <Button size="sm" className="bg-white text-black" onClick={() => handleViewAppraisal(appraisal.appraisalId,appraisal.appraisalStatus)}>
+                  <Button size="sm"   variant="secondary" onClick={() => handleViewAppraisal(appraisal.appraisalId,appraisal.appraisalStatus)}>
                     View
                   </Button>
                 </TableCell>

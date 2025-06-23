@@ -67,7 +67,7 @@ export default function AppraisalsPage() {
           
           <div className="flex gap-2 ">
             <Button
-              variant={view=== "card" ? "default" : "outline"}
+              variant={view=== "card" ? "secondary" : ""}
               size="sm"
               onClick={() => setView("card")}
               
@@ -76,7 +76,7 @@ export default function AppraisalsPage() {
               Card View
             </Button>
             <Button
-              variant={view=== "table" ? "default" : "outline"}
+              variant={view=== "table" ? "secondary" : ""}
               size="sm"
               onClick={() => setView("table")}
             >

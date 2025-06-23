@@ -16,7 +16,7 @@ import { Clock, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import EmployeeSelfAppraisalModal from "../components/EmployeeSelfAppraisalModal";
 import { GeminiAppraisalSummaryChat } from "../components/SummaryGenerator";
 import { useGetPastAppraisalsQuery } from "@/api-service/appraisal/appraisal.api";
-import { useGetEmployeeByIdQuery } from "@/api-service/employees/employee.api";
+import { useGetEmployeeByIdQuery, useGetLeadDetailsQuery} from "@/api-service/employees/employee.api";
 import { useGetAppraisalByEmployeeIdQuery } from "@/api-service/appraisal/appraisal.api";
 import { useUpdateAppraisalMutation } from "@/api-service/appraisal/appraisal.api";
 import { skipToken } from "@reduxjs/toolkit/query";
@@ -316,13 +316,6 @@ const initialAppraisals = [
   },
 ];
 
-const leadOptions = [
-  "Mike Chen",
-  "Lisa Park",
-  "John Smith",
-  "Emma Wilson",
-  "David Brown",
-];
 
 type AppraisalStatus =
   | "NA"
@@ -352,6 +345,12 @@ export default function AppraisalsPage() {
   const [viewingAppraisal, setViewingAppraisal] = useState<any>(null);
   const [draftData, setDraftData] = useState<any>(null);
   let employeeId: number | null = null;
+    const {data:leads}=useGetLeadDetailsQuery()
+    console.log(leads)
+
+  const leadOptions = leads?.map((l)=>l.name);
+  console.log("Lead options",leadOptions)
+
   if (typeof window !== "undefined") {
     const tokenStr = localStorage.getItem("token");
     if (tokenStr) {
@@ -371,7 +370,7 @@ export default function AppraisalsPage() {
 
   const currentAppraisal =
     allAppraisals.find((a: any) => a.current_status !== "ALL_DONE") || null;
-  console.log("Current Appraisal:", currentAppraisal);
+ 
   // FIXED: Derive current and past appraisals from the main state
   // const currentAppraisal =
   //   appraisals.find((a) => a.status === "pending") || null;
@@ -399,10 +398,18 @@ export default function AppraisalsPage() {
   // const hrIdToName = Object.fromEntries(hrDetails.map((hr) => [hr.id, hr.name]));
 
 // FIXED: Update the appraisals array instead of just currentAppraisal
+function getLeadIds(selectedLeadNames: string[]) {
+  if (!Array.isArray(leads)) return [];
+  return leads
+    .filter((lead) => selectedLeadNames.includes(lead.name))
+    .map((lead) => lead.id);
+}
 const [updateAppraisal] = useUpdateAppraisalMutation();
   const handleSubmitSelfAppraisal = async (formData: any, action: "save" | "submit") => {
     if (!currentAppraisal) return;
-    try {
+    try {console.log("form data",formData)
+    const leadIds=getLeadIds(formData.leadNames)
+
       await updateAppraisal({
         id: currentAppraisal.id,
         data: {
@@ -415,13 +422,16 @@ const [updateAppraisal] = useUpdateAppraisalMutation();
               project_time_frame: formData.selfAssessments[0].timeFrame,
             },
           ],
+          appraisalLeads:leadIds,
+          
           // Add other fields as needed
           // Indicate draft or submitted
-          isDraft: action === "save",
-          isSubmitted: action === "submit",
+      save_type:action,
           current_status: action === "submit" ? "SELF_APPRAISED" : currentAppraisal.current_status,
         },
-      }).unwrap();
+      }).unwrap().then().catch((e)=>{
+        console.log(e)
+      });
 
       setIsModalOpen(false);
       if (action === "save") {
@@ -445,7 +455,7 @@ const [updateAppraisal] = useUpdateAppraisalMutation();
   setIsViewModalOpen(true);
   setIsViewModalOpen(true);
 };
-
+ if(!leadOptions) return <div>Loading Leads</div>
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">My Appraisals</h1>
@@ -649,6 +659,7 @@ const [updateAppraisal] = useUpdateAppraisalMutation();
           employeeData={mapEmployeeToModalData(currentAppraisal.employee)}
           leadOptions={leadOptions}
           initialData={draftData}
+          // isReadOnly={true}
           isReadOnly={!!(currentAppraisal.self_appraisal && currentAppraisal.self_appraisal.length > 0 && currentAppraisal.current_status === "SELF_APPRAISED")}
         />
       )}
@@ -663,6 +674,7 @@ const [updateAppraisal] = useUpdateAppraisalMutation();
             setViewingAppraisal(null);
           }}
           onSubmit={() => {}}
+       
           employeeData={mapEmployeeToModalData(viewingAppraisal.employee)}
           leadOptions={leadOptions}
           isReadOnly={true}

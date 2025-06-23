@@ -15,7 +15,8 @@ export const leadsApi = baseApi.injectEndpoints({
     getAppraisalById: builder.query<AppraisalLeadView, { id: number }>({
       query: ({ id }) => ({
         url: `/appraisal/${id}`
-      })
+      }),
+      providesTags:["LEADS"]
     }),
         getPastAppraisalByEmployeeId: builder.query<PastAppraisal[],{id: number}> ({
       query: ({id}) => ({
@@ -30,22 +31,6 @@ export const leadsApi = baseApi.injectEndpoints({
       }),
       providesTags: ['LEADS']
     }),
-
-    // CreateEmployee: builder.mutation({
-    //   query: (payload) => ({
-    //     url:`/employee`,
-    //     method: 'POST',
-    //     body: payload
-    //   }),
-    //   invalidatesTags: ['EMPLOYEES']
-    // }),
-    // deleteEmployee: builder.mutation({
-    //     query:({id}) => ({
-    //         url: `/employee/${id}`,
-    //         method: 'DELETE'
-    //     }),
-    //     invalidatesTags: ['EMPLOYEES']
-    // }),
     updatePerformanceFactor: builder.mutation({
       query: ({ id, ...body }) => ({
         url: `/appraisal/${id}`,

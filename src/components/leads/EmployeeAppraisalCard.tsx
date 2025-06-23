@@ -131,6 +131,7 @@ return(
                     <div className="flex gap-2 flex-wrap" key={appraisal.appraisalId}>
                       <Button
                         size="sm"
+                        variant="default"
                         onClick={()=>{handleViewAppraisal(appraisal.appraisalId,appraisal.appraisalStatus)}}
                       >
                         <FileText className="h-4 w-4 mr-1" />
