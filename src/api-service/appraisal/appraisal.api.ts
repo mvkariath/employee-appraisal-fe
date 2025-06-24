@@ -18,13 +18,16 @@ export const appraisalApi = baseApi.injectEndpoints({
 
     getAppraisalsByCycleId: builder.query({
       query: (cycleId) => `/appraisal/in-cycle/${cycleId}`,
+          providesTags:["APPRAISALS"]
     }),
 
     getPastAppraisals: builder.query({
       query: (employeeId) => `/appraisal/past-appraisals/${employeeId}`,
+          providesTags:["APPRAISALS"]
     }),
     getAppraisalByEmployeeId: builder.query<any[],number>({
       query: (employeeId) => `/appraisal/appraisal/employee/${employeeId}`,
+          providesTags:["APPRAISALS"]
     }),
 
     createAppraisals: builder.mutation<Appraisal[], any>({

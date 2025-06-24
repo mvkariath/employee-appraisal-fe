@@ -216,7 +216,7 @@ const Index = () => {
                                 `hr/dashboard/past-appraisal/${cycle.id}`
                               )
                             }
-                            className="border-white/20 text-white/80 hover:bg-white/10 hover:text-white rounded-lg"
+                            // className="border-white/20 text-white/80 hover:bg-white/10 hover:text-white rounded-lg"
                           >
                             View Details
                           </Button>
@@ -237,7 +237,7 @@ const Index = () => {
                           size="sm"
                           variant="destructive"
                           onClick={() => handleCloseCycle(cycle.id)}
-                          className="dark:bg-red-900 text-red-300 hover:bg-red-900/80 border border-red-500/30 rounded-lg"
+                          // className="dark:bg-red-900 text-red-300 hover:bg-red-900/80 border border-red-500/30 rounded-lg"
                         >
                           Close Cycle
                         </Button>

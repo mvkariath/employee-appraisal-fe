@@ -128,7 +128,7 @@ return(
                       className="h-2"
                     /> */}
                     <div className="h-2"></div>
-                    <div className="flex gap-2 flex-wrap" key={appraisal.appraisalId}>
+                    <div className="flex gap-2 flex-wrap text-black" key={appraisal.appraisalId}>
                       <Button
                         size="sm"
                         variant="default"
@@ -137,7 +137,7 @@ return(
                         <FileText className="h-4 w-4 mr-1" />
                         View
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="primary" className="text-black">
                         <User className="h-4 w-4 mr-1" />
                         Contact
                       </Button>

@@ -89,7 +89,7 @@ const EmptyState = ({ onRemind }: { onRemind: () => void }) => (
       friendly reminder.
     </p>
     <Button
-      variant="outline"
+      variant="secondary"
       onClick={onRemind}
       className="border-white/20 text-white/80 hover:bg-white/10 hover:text-white rounded-lg gap-2"
     >
@@ -224,7 +224,7 @@ const AppraisalDetailsView: React.FC<AppraisalDetailsViewProps> = ({
 
   const RemindButton = () => (
     <Button
-      variant="outline"
+      variant="primary"
       size="sm"
       onClick={handleRemindUser}
       className="border-white/20 text-white/80 hover:bg-white/10 hover:text-white rounded-lg gap-2"

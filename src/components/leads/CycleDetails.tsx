@@ -3,7 +3,7 @@ import { format } from "path";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 import { de } from "date-fns/locale";
 import { formatDate } from "../../components/functions"
-import { Badge } from "../ui/badge";
+import { Badge } from "@/components/ui/badge"
 
 interface CycleDetailsProps {
   cycle_name: string;
@@ -25,10 +25,11 @@ const CycleDetails=({cycle}:CycleDetailsProps)=>{
     }
   }
      return (
-    <Card className="max-w-md shadow-xl rounded-2xl">
+      
+    <Card className="w-100 shadow-xl rounded-2xl">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-xl">{cycle.cycle_name}</CardTitle>
-        <Badge className={`${getStatusColor(cycle.current_status)}}`}>{cycle.current_status}</Badge>
+        <Badge className={getStatusColor(cycle.cycle_status)}>{cycle.cycle_status}</Badge>
          {/* <Badge >{cycle.current_status}</Badge> */}
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-muted-foreground">

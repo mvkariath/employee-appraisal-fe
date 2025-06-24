@@ -140,6 +140,7 @@ export default function EmployeeSelfAppraisalModal({
   initialData,
   isSubmitted = false,
 }: EmployeeSelfAppraisalModalProps) {
+  
   const [formData, setFormData] = useState<FormData>({ ...defaultFormData });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [showChat, setShowChat] = useState(false);

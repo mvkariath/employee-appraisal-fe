@@ -7,7 +7,7 @@ import { formatDate } from "../functions";
 
 export const EmployeeDetailsView = ({ employee }: {employee:Employee}) => {
   return (  
-  <Card>
+  <Card className="flex-1">
       <CardHeader>
         <CardTitle className="font-bold"> Employee Details</CardTitle>
       </CardHeader>

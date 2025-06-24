@@ -61,6 +61,11 @@ const completedAppraisals = useMemo(() => {
     ?.filter(item => item.appraisalStatus === 'FEEDBACK_SUBMITTED')
     .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
 }, [data]);
+const meetingDone=useMemo(()=>{
+return data
+    ?.filter(item => item.appraisalStatus === 'MEETING_DONE')
+    .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
+},[data])
 
 console.log("Pending Appraisals:", pendingAppraisals);
  
@@ -154,6 +159,22 @@ console.log("Pending Appraisals:", pendingAppraisals);
                 {completedAppraisals.slice(0,3).map((appraisal) => (
                  <EmployeeAppraisalCard key={appraisal.appraisalId}
                  appraisal={appraisal} />
+                ))}
+              </div>
+            </div>
+             <div className="mb-8">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Pending Appraisals</h2>
+                <Button variant="link" className="text-sm-white" onClick={()=>router.push('/leads/view-appraisal?status=MEETING_DONE')}>
+                  View All
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                {meetingDone?.slice(0,3).map((appraisal) => (
+                  <EmployeeAppraisalCard
+                    key={appraisal.appraisalId}
+                    appraisal={appraisal}
+                  />
                 ))}
               </div>
             </div>

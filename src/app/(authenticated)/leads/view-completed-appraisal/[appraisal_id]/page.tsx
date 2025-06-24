@@ -40,14 +40,13 @@ export default function AppraisalDetailPage() {
     if (!pastAppraisalsData) return null;
     return pastAppraisalsData.find((a) => a.id === appraisalId);
   }, [pastAppraisalsData, appraisalId]);
-
+  console.log("current cycle",currentCycle)
   const isLoading =
     isLoadingAppraisal ||
     isLoadingEmployee ||
     isLoadingPast ||
-    !completed_appraisal ||
-    !currentCycle;
-
+    !completed_appraisal ;
+ 
   if (isLoading) return <div className="p-4">Loading...</div>;
 
   return (
@@ -55,9 +54,11 @@ export default function AppraisalDetailPage() {
       <h1 className="text-2xl font-bold">
         Appraisal Details - {completed_appraisal?.cycle_name}
       </h1>
-
-      <CycleDetails cycle={currentCycle} />
+ <div className="flex gap-4">
+      {/* <CycleDetails  cycle={currentCycle} /> */}
       <EmployeeDetailsView employee={employeeData} />
+ </div>
+
       <SelfAppraisalView selfAppraisal={completed_appraisal?.self_appraisal} />
       <PerformanceFactorsView performance_factors={completed_appraisal?.performance_factors} />
       <IndividualDevelopmentPlanCard idpData={completed_appraisal?.idp} />

@@ -104,7 +104,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
         </div>
 
         <div className="space-y-4 mt-auto">
-          <div className="flex justify-between items-center text-sm text-white/70">
+          {/* <div className="flex justify-between items-center text-sm text-white/70">
             <span>Progress</span>
             <span>{progress}%</span>
           </div>
@@ -112,13 +112,13 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
             value={progress}
             className="h-2 bg-white/10"
             indicatorClassName="bg-gradient-to-r from-blue-400 to-cyan-300"
-          />
+          /> */}
 
           <div className="flex gap-2 flex-wrap pt-2">
             <Button
               size="sm"
               onClick={() => onViewForm(employee)}
-              className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex-1"
+              className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg "
             >
               <FileText className="h-4 w-4 mr-2" /> View Form
             </Button>
@@ -126,15 +126,15 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
               <Button
                 size="sm"
                 onClick={() => initializeAppraisal(employee)}
-                className="bg-green-600 hover:bg-green-700 text-white rounded-lg w-full mt-2"
+                className="bg-green-600 hover:bg-green-700 text-white rounded-lg"
               >
                 <ArrowRight className="h-4 w-4 mr-2" /> Initialize
               </Button>
             )}
             <Button
               size="sm"
-              variant="default"
-              className="border-white/20 text-white/80 hover:bg-white/10 hover:text-white rounded-lg"
+              variant="secondary"
+              // className="border-white/20  hover:bg-white/10 hover:text-white rounded-lg"
             >
               <User className="h-4 w-4 mr-2" /> Contact
             </Button>
@@ -152,7 +152,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
               <Button
                 size="sm"
                 onClick={() => onConductMeeting(employee)}
-                className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg w-full mt-2"
+                className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
               >
                 <Video className="h-4 w-4 mr-2" /> Conduct Meeting
               </Button>

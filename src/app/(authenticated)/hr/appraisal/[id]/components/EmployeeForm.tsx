@@ -65,7 +65,7 @@ const EmployeeForm = ({ open, onOpenChange, appraisal }: EmployeeFormProps) => {
   );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} >
       <DialogContent
         className="min-w-[70%] max-h-[90vh] overflow-hidden flex flex-col p-0 
                                 bg-[#002A35]/80 backdrop-blur-xl border border-white/10 

@@ -73,14 +73,14 @@ const Index = () => {
   const params = useParams();
   const id = params.id;
 
-  const { data, isLoading } = useGetAppraisalsByCycleIdQuery(id);
+  const { data, isLoading,isFetching } = useGetAppraisalsByCycleIdQuery(id);
   const [pushToLeadMutation]=usePushToLeadMutation()
 
   useEffect(() => {
     if (data && Array.isArray(data)) {
       setEmployees(data);
     }
-  }, [data]);
+  }, [data,isFetching]);
 
   const handlePushToLead = (employee: Employee & { appraisalId: string }) => {
     setCurrentPushEmployee(employee);
@@ -165,6 +165,7 @@ const Index = () => {
   const PushToLeadConfirmModal = () => (
     <Dialog
       open={showConfirmPushToLead}
+  
       onOpenChange={setShowConfirmPushToLead}
     >
       <DialogContent>
@@ -236,7 +237,7 @@ const Index = () => {
         endAddon={
           <div className="flex gap-2">
             <Button
-              variant={displayMode === "card" ? "default" : "outline"}
+              variant={displayMode === "card" ? "secondary" : "default"}
               size="sm"
               onClick={() => setDisplayMode("card")}
             >
@@ -244,7 +245,7 @@ const Index = () => {
               Card View
             </Button>
             <Button
-              variant={displayMode === "table" ? "default" : "outline"}
+              variant={displayMode === "table" ? "secondary" : "default"}
               size="sm"
               onClick={() => setDisplayMode("table")}
             >
@@ -262,7 +263,9 @@ const Index = () => {
       {currentIdpEmployee && (
         <EmployeeForm
           open={isViewForm}
-          onOpenChange={setIsViewForm}
+          onOpenChange={(open)=>{
+            setIsViewForm(open)
+          }}
           appraisal={currentIdpEmployee}
         />
       )}
@@ -270,6 +273,7 @@ const Index = () => {
         <IdpModal
           isOpen={isIdpModalOpen}
           onClose={() => setIsIdpModalOpen(false)}
+          
           appraisalId={currentIdpEmployee.appraisalId}
         />
       )}
