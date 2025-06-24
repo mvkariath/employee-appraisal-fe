@@ -7,7 +7,7 @@ export interface EmployeeData {
   
  
  
-  appraisalStatus:"FEEDBACK_INITIATED" | "FEEDBACK_SUBMITTED"|string;
+  appraisalStatus:"INITIATE_FEEDBACK" | "FEEDBACK_SUBMITTED"|string;
   cycleName: string;
   startDate: Date;
   endDate: Date;

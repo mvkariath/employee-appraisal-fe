@@ -29,7 +29,7 @@ import { useEffect, useState } from "react";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { Competency } from "@/components/hr/PerformanceFactorTable";
 import EmployeeForm from "./components/EmployeeForm";
-import { useGetAppraisalsByCycleIdQuery } from "@/api-service/appraisal/appraisal.api";
+import { useGetAppraisalsByCycleIdQuery, usePushToLeadMutation } from "@/api-service/appraisal/appraisal.api";
 import { useParams } from "next/navigation";
 import { Employee } from "@/types";
 import {
@@ -74,6 +74,7 @@ const Index = () => {
   const id = params.id;
 
   const { data, isLoading } = useGetAppraisalsByCycleIdQuery(id);
+  const [pushToLeadMutation]=usePushToLeadMutation()
 
   useEffect(() => {
     if (data && Array.isArray(data)) {
@@ -88,18 +89,19 @@ const Index = () => {
 
   const confirmPushToLead = () => {
     if (currentPushEmployee) {
-      setEmployees((prev) =>
-        prev.map((emp) =>
-          emp.id === currentPushEmployee.id
-            ? {
-                ...emp,
-                stage: "FEEDBACK_SUBMITTED",
-                progress: 80,
-                status: "Meeting Scheduled",
-              }
-            : emp
-        )
-      );
+      // setEmployees((prev) =>
+      //   prev.map((emp) =>
+      //     emp.id === currentPushEmployee.id
+      //       ? {
+      //           ...emp,
+      //           stage: "FEEDBACK_SUBMITTED",
+      //           progress: 80,
+      //           status: "Meeting Scheduled",
+      //         }
+      //       : emp
+      //   )
+      // );
+      pushToLeadMutation(Number(currentPushEmployee.appraisalId))
     }
     setShowConfirmPushToLead(false);
     setCurrentPushEmployee(undefined);

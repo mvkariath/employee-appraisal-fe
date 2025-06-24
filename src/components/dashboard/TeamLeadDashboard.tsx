@@ -52,7 +52,7 @@ const TeamLeadDashboard = () => {
  
 const pendingAppraisals = useMemo(() => {
   return data
-    ?.filter(item => item.appraisalStatus === 'FEEDBACK_INITIATED')
+    ?.filter(item => item.appraisalStatus === 'INITIATE_FEEDBACK')
     .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
 }, [data]);
 

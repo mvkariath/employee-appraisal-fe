@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import EmployeeSelfAppraisalModal from "../components/EmployeeSelfAppraisalModal";
 import { GeminiAppraisalSummaryChat } from "../components/SummaryGenerator";
-import { useGetPastAppraisalsQuery } from "@/api-service/appraisal/appraisal.api";
+import { useGetPastAppraisalsQuery, useUpdateAppraisalStatusMutation } from "@/api-service/appraisal/appraisal.api";
 import { useGetEmployeeByIdQuery, useGetLeadDetailsQuery} from "@/api-service/employees/employee.api";
 import { useGetAppraisalByEmployeeIdQuery } from "@/api-service/appraisal/appraisal.api";
 import { useUpdateAppraisalMutation } from "@/api-service/appraisal/appraisal.api";
@@ -375,6 +375,8 @@ export default function AppraisalsPage() {
   // const currentAppraisal =
   //   appraisals.find((a) => a.status === "pending") || null;
   // const pastAppraisals = appraisals.filter((a) => a.status === "completed");
+  const [updateStatus]=useUpdateAppraisalStatusMutation()
+
   const {
     data: pastAppraisals = [],
     isLoading,
@@ -432,6 +434,11 @@ const [updateAppraisal] = useUpdateAppraisalMutation();
       }).unwrap().then().catch((e)=>{
         console.log(e)
       });
+      await updateStatus({id:currentAppraisal.id,data:{status:"SELF_APPRAISED"}}).unwrap().then(()=>{
+        console.log("Updated Status to self appraised")
+      }).catch((e)=>{
+        console.log("Cannot update",e)
+      })
 
       setIsModalOpen(false);
       if (action === "save") {

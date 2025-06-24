@@ -65,7 +65,7 @@ export const EmployeeAppraisalCard = ({ appraisal }: EmployeeAppraisalCardProps)
     }
   };
      const handleViewAppraisal = (appraisalId:number,status:string) => {
-    if(status==="FEEDBACK_INITIATED" || status==="FEEDBACK_SUBMITTED"){
+    if(status==="INITIATE_FEEDBACK" || status==="FEEDBACK_SUBMITTED"){
          router.push(`/leads/appraisal/${appraisalId}`)
     }else if(status==="MEETING_DONE"){
       router.push(`/leads/view-completed-appraisal/${appraisalId}`)
